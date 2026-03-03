@@ -8,7 +8,8 @@ CREATE TABLE zones (
     type_zone VARCHAR(50),
     superficie DECIMAL(10,2),
     latitude DECIMAL(9,6),
-    longitude DECIMAL(9,6)
+    longitude DECIMAL(9,6),
+    seuil_critique DECIMAL(5,2) NOT NULL
 );
 
 CREATE TABLE capteurs (

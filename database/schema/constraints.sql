@@ -2,6 +2,10 @@
 -- FOREIGN KEYS & CONSTRAINTS
 -- =========================
 
+ALTER TABLE zones
+ADD CONSTRAINT check_seuil_positive
+CHECK (seuil_critique > 0);
+
 ALTER TABLE capteurs
 ADD CONSTRAINT fk_capteurs_zone
 FOREIGN KEY (zone_id)
