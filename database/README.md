@@ -1,16 +1,13 @@
 # Oued-Souss Alert - Database
 
-Base de données PostgreSQL pour la surveillance des crues agricoles
-dans la région Souss-Massa.
+Base de données PostgreSQL pour la surveillance des crues agricoles dans la région Souss-Massa.
 
 ## Structure du dossier
 
-database/
+database/schema/
   - tables.sql       → Création des tables
   - constraints.sql  → Clés étrangères
   - indexes.sql      → Index pour optimisation
-  - seed.sql         → Données de test
-  - install.sql      → Script d’installation complet
 
 ---
 
@@ -21,7 +18,7 @@ database/
 
 ---
 
-## Installation complète
+## Installation Guide
 
 ### 1️⃣ Cloner le projet
 
@@ -35,7 +32,7 @@ createdb -U postgres oued_souss_db
 ### 3️⃣ Installer la base
 
 cd database
-psql -U postgres -d oued_souss_db -f install.sql
+psql -U postgres -d oued_souss_db -f init.sql
 
 ---
 
@@ -43,7 +40,6 @@ psql -U postgres -d oued_souss_db -f install.sql
 
 - Modèle relationnel normalisé en 3FN
 - Index optimisés pour requêtes temps réel
-- Compatible dashboard et système d’alerte automatique
 
 ---
 
