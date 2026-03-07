@@ -51,3 +51,9 @@ CREATE TABLE alertes (
     message TEXT,
     statut VARCHAR(20)
 );
+
+CREATE TABLE mesures_niveau_eau_archive
+AS TABLE mesures_niveau_eau WITH NO DATA;
+
+CREATE TABLE mesures_pluie_archive
+AS TABLE mesures_pluie WITH NO DATA;
