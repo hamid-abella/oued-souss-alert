@@ -12,9 +12,10 @@
 -- =========================
 -- FUNCTIONS
 -- =========================
-\i functions/fn_check_niveau_eau.sql
-\i functions/fn_generate_alerte.sql
-\i functions/fn_close_alerte.sql
+\i functions/fn_check_valeurs_aberrantes.sql
+\i functions/fn_get_risk_trend.sql
+\i functions/fn_trigger_alerte_crue.sql
+\i functions/fn_update_niveau_risque.sql
 
 -- =========================
 -- TRIGGERS
@@ -27,4 +28,4 @@
 -- PROCEDURES
 -- =========================
 \i procedures/calculate_flood_risk.sql
-\i procedures/get_risk_trend.sql
+\i procedures/archive_old_measurements.sql
