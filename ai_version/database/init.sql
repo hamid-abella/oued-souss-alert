@@ -29,3 +29,8 @@
 -- =========================
 \i procedures/calculate_flood_risk.sql
 \i procedures/archive_old_measurements.sql
+
+-- =========================
+-- SEED DATA (Data Mocking)
+-- =========================
+\i seed/mock_data.sql
