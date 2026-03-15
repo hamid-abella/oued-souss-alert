@@ -1,13 +1,13 @@
-const express = require("express");
-const cors = require("cors");
+const express = require("express")
+const cors = require("cors")
 
-const zonesRoutes = require("./routes/zones.routes");
+const app = express()
 
-const app = express();
+app.use(cors())
+app.use(express.json())
 
-app.use(cors());
-app.use(express.json());
+module.exports = app
 
-app.use("/api/zones", zonesRoutes);
+const zoneRoutes = require("./routes/zone.routes")
 
-module.exports = app;
+app.use("/api/zones", zoneRoutes)
