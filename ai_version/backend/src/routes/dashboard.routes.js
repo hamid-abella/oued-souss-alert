@@ -1,21 +1,8 @@
-const express = require("express");
+const router            = require('express').Router();
+const dashboardCtrl     = require('../controllers/dashboard.controller');
+const { authorizeRole } = require('../middleware/auth');
 
-const router = express.Router();
-
-const dashboardController = require("../controllers/dashboard.controller");
-
-
-/*
-Statistiques globales
-*/
-
-router.get("/stats", dashboardController.getDashboardStats);
-
-
-/*
-Dernières alertes
-*/
-
-router.get("/alerts", dashboardController.getRecentAlerts);
+router.get('/overview', authorizeRole('dashboard', 'read'), dashboardCtrl.getOverview);
+router.get('/stats',    authorizeRole('dashboard', 'read'), dashboardCtrl.getStats);
 
 module.exports = router;

@@ -1,19 +1,28 @@
-const fs = require("fs");
+// =============================================================
+// Projet : Oued-Souss Alert
+// Fichier : src/utils/logger.js
+// Description : Logger Winston pour traçabilité complète
+// Spec : Intégrité des logs (audit sécurité)
+// =============================================================
 
-const path = require("path");
+const winston = require('winston');
 
-const logFile = path.join(__dirname,"../../logs.txt");
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.combine(
+    winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+    winston.format.printf(({ timestamp, level, message }) => {
+      return `[${timestamp}] ${level.toUpperCase()} : ${message}`;
+    })
+  ),
+  transports: [
+    // Logs dans la console
+    new winston.transports.Console(),
+    // Logs dans un fichier (pour audit sécurité)
+    new winston.transports.File({ filename: 'logs/app.log' }),
+    // Logs d'erreurs séparés
+    new winston.transports.File({ filename: 'logs/error.log', level: 'error' })
+  ]
+});
 
-
-/*
-Logger simple
-*/
-
-exports.log = (level,message)=>{
-
-  const line =
-  `[${new Date().toISOString()}] ${level} : ${message}\n`;
-
-  fs.appendFileSync(logFile,line);
-
-};
+module.exports = logger;

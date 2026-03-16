@@ -1,0 +1,59 @@
+/* =============================================================
+   Projet : Oued-Souss Alert
+   Fichier : src/styles/theme.css
+   Description : Variables CSS globales — thème industriel/utilitaire
+   Palette : bleu nuit + ambre d'alerte + vert sécurité
+   ============================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap');
+
+:root {
+  /* Couleurs principales */
+  --color-bg:          #080e1a;       /* fond nuit profonde */
+  --color-surface:     #0d1626;       /* surface carte */
+  --color-surface-2:   #111e35;       /* surface secondaire */
+  --color-border:      #1e3a5f;       /* bordure subtile */
+  --color-border-2:    #2a4a7a;
+
+  /* Texte */
+  --color-text:        #e8f0fe;       /* texte principal */
+  --color-text-muted:  #6b8ab0;       /* texte secondaire */
+  --color-text-dim:    #3d5a80;
+
+  /* Accent principal : bleu électrique */
+  --color-primary:     #1a7fe8;
+  --color-primary-dim: #0d4a8a;
+  --color-primary-glow:rgba(26, 127, 232, 0.2);
+
+  /* Niveaux de risque */
+  --color-faible:      #00c48c;       /* vert sécurité */
+  --color-moyen:       #f5a623;       /* ambre vigilance */
+  --color-eleve:       #f26b38;       /* orange danger */
+  --color-critique:    #e8303a;       /* rouge critique */
+
+  /* États */
+  --color-success:     #00c48c;
+  --color-warning:     #f5a623;
+  --color-danger:      #e8303a;
+  --color-info:        #1a7fe8;
+
+  /* Typographie */
+  --font-display:      'Syne', sans-serif;        /* titres, headings */
+  --font-body:         'Instrument Sans', sans-serif; /* corps */
+  --font-mono:         'JetBrains Mono', monospace;   /* données, valeurs */
+
+  /* Rayons */
+  --radius-sm:   4px;
+  --radius-md:   8px;
+  --radius-lg:   16px;
+  --radius-xl:   24px;
+
+  /* Ombres */
+  --shadow-sm:   0 2px 8px rgba(0,0,0,0.4);
+  --shadow-md:   0 4px 24px rgba(0,0,0,0.5);
+  --shadow-lg:   0 8px 48px rgba(0,0,0,0.6);
+  --shadow-glow: 0 0 24px var(--color-primary-glow);
+
+  /* Transitions */
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}

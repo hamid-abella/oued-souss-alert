@@ -1,0 +1,30 @@
+# Dépendances
+node_modules/
+
+# Build
+dist/
+dist-ssr/
+
+# Variables d'environnement (ne jamais commiter)
+.env
+.env.local
+.env.production
+
+# Logs
+*.log
+npm-debug.log*
+
+# Cache Vite
+.vite/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln

@@ -1,10 +1,14 @@
-// Import de l'application express
-const app = require("./app");
+// =============================================================
+// Projet : Oued-Souss Alert
+// Fichier : src/server.js
+// Description : Point d'entrée du serveur Express
+// =============================================================
 
-// Port du serveur
-const PORT = process.env.PORT || 5000;
+const app = require('./app');
+const logger = require('./utils/logger');
 
-// Démarrage du serveur
+const PORT = process.env.PORT || 3000;
+
 app.listen(PORT, () => {
-  console.log(`Serveur démarré sur le port ${PORT}`);
+  logger.info(`Serveur Oued-Souss Alert démarré sur le port ${PORT}`);
 });

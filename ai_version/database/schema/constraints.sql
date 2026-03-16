@@ -1,43 +1,29 @@
--- =========================
--- FOREIGN KEYS & CONSTRAINTS
--- =========================
+-- Contrainte : un capteur de type 'niveau_eau' ne peut mesurer que dans mesures_niveau_eau
+-- Contrainte : valeur indice toujours entre 0 et 1
+ALTER TABLE indices_risque
+    ADD CONSTRAINT chk_valeur_indice
+    CHECK (valeur_indice >= 0 AND valeur_indice <= 1);
 
+-- Contrainte : superficie toujours positive si renseignée
 ALTER TABLE zones
-ADD CONSTRAINT check_seuil_positive
-CHECK (seuil_critique > 0);
+    ADD CONSTRAINT chk_superficie_positive
+    CHECK (superficie IS NULL OR superficie > 0);
 
+-- Contrainte : date d'installation capteur ne peut pas être dans le futur
 ALTER TABLE capteurs
-ADD CONSTRAINT fk_capteurs_zone
-FOREIGN KEY (zone_id)
-REFERENCES zones(zone_id)
-ON DELETE CASCADE;
+    ADD CONSTRAINT chk_date_installation
+    CHECK (date_installation IS NULL OR date_installation <= CURRENT_DATE);
 
+-- Contrainte : date de mesure ne peut pas être dans le futur
 ALTER TABLE mesures_niveau_eau
-ADD CONSTRAINT fk_mesures_niveau_capteur
-FOREIGN KEY (capteur_id)
-REFERENCES capteurs(capteur_id)
-ON DELETE CASCADE;
+    ADD CONSTRAINT chk_date_mesure_niveau
+    CHECK (date_heure <= NOW());
 
 ALTER TABLE mesures_pluie
-ADD CONSTRAINT fk_mesures_pluie_capteur
-FOREIGN KEY (capteur_id)
-REFERENCES capteurs(capteur_id)
-ON DELETE CASCADE;
+    ADD CONSTRAINT chk_date_mesure_pluie
+    CHECK (date_heure <= NOW());
 
-ALTER TABLE indices_risque
-ADD CONSTRAINT fk_indices_zone
-FOREIGN KEY (zone_id)
-REFERENCES zones(zone_id)
-ON DELETE CASCADE;
-
+-- Contrainte : date alerte ne peut pas être dans le futur
 ALTER TABLE alertes
-ADD CONSTRAINT fk_alertes_zone
-FOREIGN KEY (zone_id)
-REFERENCES zones(zone_id)
-ON DELETE CASCADE;
-
-ALTER TABLE alertes
-ADD CONSTRAINT fk_alertes_indice
-FOREIGN KEY (indice_id)
-REFERENCES indices_risque(indice_id)
-ON DELETE SET NULL;
+    ADD CONSTRAINT chk_date_alerte
+    CHECK (date_alerte <= NOW());

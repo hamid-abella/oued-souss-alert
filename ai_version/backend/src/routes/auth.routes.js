@@ -1,21 +1,13 @@
-const express = require("express");
+const router     = require('express').Router();
+const authCtrl   = require('../controllers/auth.controller');
+const { body }   = require('express-validator');
+const validate   = require('../middleware/validate');
 
-const router = express.Router();
-
-const authController = require("../controllers/auth.controller");
-
-
-/*
-Login utilisateur
-*/
-
-router.post("/login", authController.login);
-
-
-/*
-Créer compte
-*/
-
-router.post("/register", authController.register);
+router.post('/login',
+  body('email').isEmail().normalizeEmail(),
+  body('password').isLength({ min: 6 }),
+  validate,
+  authCtrl.login
+);
 
 module.exports = router;
