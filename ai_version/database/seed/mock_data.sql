@@ -16,7 +16,7 @@ TRUNCATE zones CASCADE;
 -- 1. ZONES
 -- ==========================================
 
-INSERT INTO zones (id, nom, type_zone, superficie, latitude, longitude, seuil_critique)
+INSERT INTO zones (zone_id, nom, type_zone, superficie, latitude, longitude, seuil_critique)
 VALUES
 (1,'Chtouka Ait Baha','agricole',1200,30.120,-9.450,3.5),
 (2,'Taroudant Nord','agricole',900,30.450,-8.870,3.2),
@@ -29,7 +29,7 @@ VALUES
 -- 2. CAPTEURS
 -- ==========================================
 
-INSERT INTO capteurs (id, zone_id, type_capteur, date_installation, statut)
+INSERT INTO capteurs (capteur_id, zone_id, type_capteur, date_installation, statut)
 VALUES
 (1,1,'niveau_eau','2024-01-01','actif'),
 (2,1,'pluie','2024-01-01','actif'),
@@ -52,19 +52,19 @@ VALUES
 -- Génération automatique (7 jours)
 -- ==========================================
 
-INSERT INTO mesures_pluie (capteur_id,date_mesure,quantite_pluie)
+INSERT INTO mesures_pluie (capteur_id,date_heure,quantite_pluie)
 SELECT
 2,
 NOW() - (interval '1 hour' * s),
-round(random()*20,2)
+round((random() * 20)::numeric, 2)
 FROM generate_series(1,168) s;
 
 
-INSERT INTO mesures_pluie (capteur_id,date_mesure,quantite_pluie)
+INSERT INTO mesures_pluie (capteur_id,date_heure,quantite_pluie)
 SELECT
 4,
 NOW() - (interval '1 hour' * s),
-round(random()*30,2)
+round((random() * 30)::numeric, 2)
 FROM generate_series(1,168) s;
 
 
@@ -73,19 +73,19 @@ FROM generate_series(1,168) s;
 -- Corrélé à la pluie
 -- ==========================================
 
-INSERT INTO mesures_niveau_eau (capteur_id,date_mesure,niveau_eau)
+INSERT INTO mesures_niveau_eau (capteur_id,date_heure,niveau_eau)
 SELECT
 1,
 NOW() - (interval '1 hour' * s),
-round(1 + random()*2,2)
+round(1 + (random() * 21)::numeric, 2)
 FROM generate_series(1,168) s;
 
 
-INSERT INTO mesures_niveau_eau (capteur_id,date_mesure,niveau_eau)
+INSERT INTO mesures_niveau_eau (capteur_id,date_heure,niveau_eau)
 SELECT
 3,
 NOW() - (interval '1 hour' * s),
-round(1 + random()*2.5,2)
+round(1+(random() * 2.5)::numeric, 2)
 FROM generate_series(1,168) s;
 
 
@@ -94,7 +94,7 @@ FROM generate_series(1,168) s;
 -- montée rapide du niveau
 -- ==========================================
 
-INSERT INTO mesures_niveau_eau (capteur_id,date_mesure,niveau_eau)
+INSERT INTO mesures_niveau_eau (capteur_id,date_heure,niveau_eau)
 VALUES
 (1,NOW()-interval '5 hour',2.8),
 (1,NOW()-interval '4 hour',3.1),
@@ -111,7 +111,7 @@ VALUES
 -- devrait être bloqué par le trigger
 
 INSERT INTO mesures_niveau_eau
-(capteur_id,date_mesure,niveau_eau)
+(capteur_id,date_heure,niveau_eau)
 VALUES
 (1,NOW(),-50);
 
