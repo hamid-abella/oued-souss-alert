@@ -4,7 +4,45 @@
 -- Description : Données de test réalistes pour la région Souss-Massa
 --               Permet de tester les triggers et seuils d'alerte
 --               sans données réelles (Data Mocking)
+-- Correction : Ajout de mesures pour la Zone 5 (Ouled Teima) afin de
+--              couvrir le scénario capteur pluie hors_service + niveau_eau
+--              actif. Avertissement de réinitialisation ajouté.
+--
+-- ATTENTION : Ce script est ADDITIF. Pour éviter les doublons sur les
+--             tables indices_risque et alertes lors d'un rechargement,
+--             réinitialiser d'abord les données avec :
+--               TRUNCATE alertes, indices_risque, mesures_pluie,
+--                        mesures_niveau_eau, capteurs, zones, users
+--               RESTART IDENTITY CASCADE;
 -- =============================================================
+
+-- Les mots de passe sont hashés avec bcrypt (10 rounds)
+-- admin123, oper123, lecteur123, sec123
+INSERT INTO users (nom, email, password, role) VALUES
+(
+    'Admin Système',
+    'admin@souss.ma',
+    '$2a$10$6if2tvK/fh8FAXCPugMJIOCjaVS8KIIG3Pj5gt8VvoPx2lnErDX0S',
+    'admin'
+),
+(
+    'Opérateur Terrain',
+    'oper@souss.ma',
+    '$2a$10$3O1pPKTjdxr.Q0Q4ljkp7eQvUCVir4uJ6jNEkqBFIXpjSCXVJmkAy',
+    'operateur'
+),
+(
+    'Lecteur Dashboard',
+    'lecteur@souss.ma',
+    '$2a$10$U3qdrxOeXM53Abg1iRkBU.3eNYXndNsoS0EF4ob82zL/1p2Z5OeQe',
+    'lecteur'
+),
+(
+    'Agent Sécurité',
+    'securite@souss.ma',
+    '$2a$10$2cu4BdYczLso.CJSCGbD9OjQgSodW1xvIwHUPRTktL/laPBQtGuNe',
+    'securite'
+);
 
 -- ---------------------------------------------------------------
 -- Zones agricoles et urbaines surveillées
@@ -57,7 +95,15 @@ INSERT INTO mesures_niveau_eau (capteur_id, date_heure, niveau_eau) VALUES
 (3, NOW() - INTERVAL '3 days',  1.20),
 (3, NOW() - INTERVAL '2 days',  1.30),
 (3, NOW() - INTERVAL '1 day',   1.40),
-(3, NOW(),                      1.20);
+(3, NOW(),                      1.20),
+
+-- Capteur 9 (Zone 5 - Ouled Teima) : niveau stable, capteur pluie hors service
+-- Scénario : on valide que calculate_flood_risk fonctionne sans données pluie
+--            (avg_pluie = 0 via COALESCE car capteur hors_service exclu)
+(9, NOW() - INTERVAL '3 days',  0.60),
+(9, NOW() - INTERVAL '2 days',  0.75),
+(9, NOW() - INTERVAL '1 day',   0.80),
+(9, NOW(),                      0.70);
 
 -- ---------------------------------------------------------------
 -- Mesures de pluie (corrélées avec les montées de niveau)
@@ -80,6 +126,10 @@ INSERT INTO mesures_pluie (capteur_id, date_heure, pluie_mm) VALUES
 (4, NOW() - INTERVAL '2 days',  12.0),
 (4, NOW() - INTERVAL '1 day',    5.0),
 (4, NOW(),                        1.0);
+
+-- Note : aucune mesure pour le capteur 10 (Zone 5 - pluie hors_service)
+-- C'est intentionnel : ce scénario valide que calculate_flood_risk
+-- gère correctement l'absence de données pluie (avg_pluie = 0).
 
 -- ---------------------------------------------------------------
 -- Test QA : Données aberrantes (doivent être rejetées par les triggers)
@@ -108,14 +158,15 @@ INSERT INTO mesures_pluie (capteur_id, date_heure, pluie_mm) VALUES
 -- $$;
 
 -- =============================================================
--- Fichier : database/seed/mock_data.sql
--- AJOUT : Calcul des indices + génération des alertes
+-- Calcul des indices de risque + génération automatique des alertes
+-- Les appels ci-dessous déclenchent trg_generate_alerte (AFTER INSERT
+-- sur indices_risque) qui crée une alerte si niveau_risque = CRITIQUE.
+-- La protection anti-doublon dans generate_alerte_critique() garantit
+-- qu'une seule alerte ACTIVE est créée par zone, même en cas de
+-- rechargement partiel du seed.
 -- =============================================================
-
--- Calculer les indices pour toutes les zones
--- Cela déclenche automatiquement les triggers d'alerte
 CALL calculate_flood_risk(1); -- Zone Aït Melloul  → devrait être CRITIQUE
 CALL calculate_flood_risk(2); -- Zone Taroudant    → devrait être MOYEN
 CALL calculate_flood_risk(3); -- Zone Agadir       → devrait être FAIBLE
 CALL calculate_flood_risk(4); -- Zone Chtouka      → devrait être MOYEN
-CALL calculate_flood_risk(5); -- Zone Ouled Teima  → devrait être FAIBLE
+CALL calculate_flood_risk(5); -- Zone Ouled Teima  → devrait être FAIBLE (pluie absente)

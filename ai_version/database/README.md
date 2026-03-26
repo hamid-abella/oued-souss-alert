@@ -24,12 +24,12 @@ psql -U postgres -d oued_souss_alert -f init.sql
 database/
 ├── init.sql                      # Point d'entrée — exécuter ce fichier
 ├── schema/
-│   ├── tables.sql                # 6 tables principales + 2 tables archives
+│   ├── tables.sql                # 7 tables principales + 2 tables archives
 │   ├── constraints.sql           # Contraintes CHECK supplémentaires
 │   └── indexes.sql               # 7 index de performance
 ├── functions/
 │   ├── fn_check_valeurs_aberrantes.sql   # Validation niveau eau + pluie
-│   ├── fn_trigger_alerte_critique.sql    # Génération alerte si CRITIQUE
+│   ├── fn_trigger_alerte_critique.sql    # Génération alerte si CRITIQUE (anti-doublon)
 │   ├── fn_update_niveau_alerte.sql       # Fermeture alerte si niveau baisse
 │   └── fn_get_risk_trend.sql             # Analyse tendance du risque
 ├── triggers/
@@ -47,6 +47,18 @@ database/
 ---
 
 ## Schéma des tables
+
+### `users`
+| Colonne | Type | Description |
+|---|---|---|
+| user_id | SERIAL PK | Identifiant unique |
+| nom | VARCHAR(100) | Nom complet |
+| email | VARCHAR(150) | Email unique |
+| password | VARCHAR(255) | Mot de passe hashé (bcrypt) |
+| role | VARCHAR(20) | admin / operateur / lecteur / securite |
+| actif | BOOLEAN | Compte actif (désactiver sans supprimer) |
+| created_at | TIMESTAMP | Date de création |
+| updated_at | TIMESTAMP | Date de dernière modification |
 
 ### `zones`
 | Colonne | Type | Description |
@@ -126,13 +138,15 @@ database/
 ```sql
 -- Se déclenche : AFTER INSERT ON indices_risque
 -- Rôle : crée une alerte si niveau_risque = 'CRITIQUE'
+-- Anti-doublon : vérifie qu'aucune alerte ACTIVE n'existe déjà pour la zone
 -- Inclut : traçabilité zone + indice + capteur
 ```
 
 ### `trg_close_alerte`
 ```sql
 -- Se déclenche : AFTER INSERT ON mesures_niveau_eau
--- Rôle : résout les alertes actives si niveau < 50% du seuil
+-- Rôle : résout toutes les alertes actives de la zone si niveau < 50% du seuil
+-- Note : la fermeture est zonale (tous les capteurs de la zone sont considérés)
 ```
 
 ---
@@ -149,6 +163,9 @@ CALL calculate_flood_risk(1);
 -- Formule
 indice = (niveau_normalisé × 0.6) + (pluie_normalisée × 0.4)
 
+-- Seuls les capteurs statut = 'actif' sont pris en compte
+-- (aussi bien pour le niveau d'eau que pour les précipitations)
+
 -- Classification
 indice ≥ 0.9  → CRITIQUE
 indice ≥ 0.7  → ELEVE
@@ -164,6 +181,10 @@ Déplace les anciennes mesures vers les tables d'archive.
 CALL archive_old_measurements(NOW() - INTERVAL '6 months');
 ```
 
+Les tables d'archive (`mesures_niveau_eau_archive`, `mesures_pluie_archive`) ne
+comportent pas de contraintes de clé étrangère, afin d'éviter des erreurs
+d'intégrité si des capteurs ont été supprimés après la prise des mesures.
+
 ---
 
 ## Données de test
@@ -172,12 +193,24 @@ Le fichier `seed/mock_data.sql` contient :
 
 - **5 zones** de la région Souss-Massa avec coordonnées GPS réelles
 - **10 capteurs** (niveau eau + pluie par zone)
+- **4 comptes utilisateurs** (admin, opérateur, lecteur, agent sécurité)
 - **Mesures historiques** sur 7 jours avec scénario de crue pour Zone 1
+- **Mesures Zone 5** couvrant le scénario capteur pluie `hors_service`
 - **Appels** à `calculate_flood_risk` pour générer indices et alertes
+
 ```bash
-# Réinitialiser les données de test
+# Réinitialiser complètement les données de test
+psql -U postgres -d oued_souss_alert -c "
+TRUNCATE alertes, indices_risque, mesures_pluie, mesures_niveau_eau,
+         capteurs, zones, users RESTART IDENTITY CASCADE;"
+
 psql -U postgres -d oued_souss_alert -f database/seed/mock_data.sql
 ```
+
+> **Attention** : sans le `TRUNCATE` préalable, relancer `mock_data.sql`
+> génère des doublons dans `indices_risque`. La protection anti-doublon de
+> `generate_alerte_critique()` empêche les doublons dans `alertes`, mais
+> `indices_risque` reste additif.
 
 ---
 
@@ -205,4 +238,7 @@ JOIN capteurs c ON m.capteur_id = c.capteur_id
 WHERE c.zone_id = 1
 ORDER BY date_heure DESC
 LIMIT 20;
+
+-- Tendance du risque sur une période
+SELECT * FROM get_risk_trend(1, NOW() - INTERVAL '7 days', NOW());
 ```

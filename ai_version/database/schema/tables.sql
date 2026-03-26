@@ -1,6 +1,26 @@
--- =========================
--- TABLES - Oued-Souss Alert
--- =========================
+-- =============================================================
+-- Projet : Oued-Souss Alert
+-- Fichier : schema/tables.sql
+-- Description : Création des 7 tables principales + 2 tables d'archive
+-- Correction : Suppression explicite des contraintes FK héritées sur les
+--              tables d'archive (CREATE TABLE AS copie la structure mais
+--              pas les contraintes nommées ; les FK implicites peuvent
+--              provoquer des erreurs lors d'archivage si les capteurs
+--              référencés ont été supprimés entre-temps)
+-- =============================================================
+
+-- Table des utilisateurs du système
+-- Gère l'authentification et le RBAC
+CREATE TABLE users (
+    user_id    SERIAL PRIMARY KEY,
+    nom        VARCHAR(100)  NOT NULL,
+    email      VARCHAR(150)  NOT NULL UNIQUE,
+    password   VARCHAR(255)  NOT NULL,       -- hashé avec bcrypt
+    role       VARCHAR(20)   NOT NULL CHECK (role IN ('admin', 'operateur', 'lecteur', 'securite')),
+    actif      BOOLEAN       DEFAULT TRUE,   -- désactiver sans supprimer
+    created_at TIMESTAMP     DEFAULT NOW(),
+    updated_at TIMESTAMP     DEFAULT NOW()
+);
 
 -- Table des zones géographiques surveillées
 -- Contient les zones agricoles et urbaines proches de l'Oued Souss
@@ -74,12 +94,12 @@ CREATE TABLE indices_risque (
 );
 
 -- Table des alertes générées par le système
--- Centralize toutes les alertes avec traçabilité complète (zone + capteur + indice)
+-- Centralise toutes les alertes avec traçabilité complète (zone + capteur + indice)
 CREATE TABLE alertes (
     alerte_id   SERIAL PRIMARY KEY,
     zone_id     INTEGER         NOT NULL,
     indice_id   INTEGER,                   -- nullable : ON DELETE SET NULL
-    capteur_id  INTEGER,                   -- AJOUT : traçabilité du capteur déclencheur
+    capteur_id  INTEGER,                   -- traçabilité du capteur déclencheur
     date_alerte TIMESTAMP       NOT NULL,
     type_alerte VARCHAR(50)     CHECK (type_alerte IN ('CRUE', 'PRECIPITATION_INTENSE', 'DEPASSEMENT_SEUIL')),
     message     TEXT,
@@ -104,10 +124,28 @@ CREATE TABLE alertes (
         ON DELETE SET NULL
 );
 
+-- =============================================================
 -- Tables d'archive pour les anciennes mesures
--- Même structure que les tables principales, sans données (remplies par procédure d'archivage)
+-- Même structure que les tables principales, sans données
+-- (remplies par la procédure archive_old_measurements)
+--
+-- IMPORTANT : CREATE TABLE AS copie uniquement les colonnes, pas les
+-- contraintes nommées. Les FK sont explicitement supprimées ci-dessous
+-- pour éviter des erreurs d'intégrité référentielle lors de l'archivage
+-- (un capteur peut avoir été supprimé après la mesure originale).
+-- =============================================================
 CREATE TABLE mesures_niveau_eau_archive
     AS TABLE mesures_niveau_eau WITH NO DATA;
 
 CREATE TABLE mesures_pluie_archive
     AS TABLE mesures_pluie WITH NO DATA;
+
+-- Suppression des éventuelles FK héritées sur les tables d'archive
+-- (PostgreSQL ne copie pas les contraintes nommées via AS TABLE,
+--  mais cette suppression explicite sécurise les environnements
+--  où la structure aurait été créée autrement)
+ALTER TABLE mesures_niveau_eau_archive
+    DROP CONSTRAINT IF EXISTS fk_mesures_niveau_capteur;
+
+ALTER TABLE mesures_pluie_archive
+    DROP CONSTRAINT IF EXISTS fk_mesures_pluie_capteur;

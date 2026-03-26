@@ -1,41 +1,108 @@
 // =============================================================
 // Projet : Oued-Souss Alert
 // Fichier : src/services/auth.service.js
-// Description : Authentification JWT pour le RBAC
-// Spec : RBAC obligatoire
+// Description : Authentification depuis la base de données
+//               Remplace la liste statique USERS
 // =============================================================
 
-const jwt      = require('jsonwebtoken');
-const bcrypt   = require('bcryptjs');
-
-// Utilisateurs en dur pour la démo (remplacer par table users en prod)
-const USERS = [
-  { id: 1, nom: 'Admin',    email: 'admin@souss.ma',    password: bcrypt.hashSync('admin123', 10),    role: 'admin' },
-  { id: 2, nom: 'Operateur',email: 'oper@souss.ma',     password: bcrypt.hashSync('oper123', 10),     role: 'operateur' },
-  { id: 3, nom: 'Lecteur',  email: 'lecteur@souss.ma',  password: bcrypt.hashSync('lecteur123', 10),  role: 'lecteur' },
-  { id: 4, nom: 'Securite', email: 'securite@souss.ma', password: bcrypt.hashSync('sec123', 10),      role: 'securite' },
-];
+const bcrypt = require('bcryptjs');
+const jwt    = require('jsonwebtoken');
+const pool   = require('../config/db');
 
 const login = async (email, password) => {
-  const user = USERS.find(u => u.email === email);
 
+  // Étape 1 : Chercher l'utilisateur en base de données
+  const result = await pool.query(
+    `SELECT user_id, nom, email, password, role, actif
+     FROM users
+     WHERE email = $1`,
+    [email]  // requête paramétrée → protégée contre injection SQL
+  );
+
+  const user = result.rows[0];
+
+  // Étape 2 : Vérifier que l'utilisateur existe
   if (!user) {
-    throw new Error('Utilisateur non trouvé.');
+    throw new Error('Email ou mot de passe incorrect.');
   }
 
+  // Étape 3 : Vérifier que le compte est actif
+  if (!user.actif) {
+    throw new Error('Compte désactivé. Contactez l\'administrateur.');
+  }
+
+  // Étape 4 : Vérifier le mot de passe avec bcrypt
   const valid = await bcrypt.compare(password, user.password);
   if (!valid) {
-    throw new Error('Mot de passe incorrect.');
+    throw new Error('Email ou mot de passe incorrect.');
   }
 
-  // Génération du token JWT (expire en 8h)
+  // Étape 5 : Générer le token JWT
   const token = jwt.sign(
-    { id: user.id, nom: user.nom, role: user.role },
+    {
+      id:   user.user_id,
+      nom:  user.nom,
+      role: user.role,
+    },
     process.env.JWT_SECRET,
     { expiresIn: '8h' }
   );
 
-  return { token, role: user.role, nom: user.nom };
+  return {
+    token,
+    role: user.role,
+    nom:  user.nom,
+  };
 };
 
-module.exports = { login };
+// Récupérer tous les utilisateurs (admin seulement)
+const getAllUsers = async () => {
+  const result = await pool.query(
+    `SELECT user_id, nom, email, role, actif, created_at
+     FROM users
+     ORDER BY user_id`
+  );
+  return result.rows;
+};
+
+// Créer un utilisateur
+const createUser = async (data) => {
+  const { nom, email, password, role } = data;
+
+  // Hasher le mot de passe avant stockage
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  const result = await pool.query(
+    `INSERT INTO users (nom, email, password, role)
+     VALUES ($1, $2, $3, $4)
+     RETURNING user_id, nom, email, role, actif, created_at`,
+    [nom, email, hashedPassword, role]
+  );
+  return result.rows[0];
+};
+
+// Désactiver un utilisateur (ne pas supprimer)
+const deactivateUser = async (userId) => {
+  const result = await pool.query(
+    `UPDATE users SET actif = FALSE, updated_at = NOW()
+     WHERE user_id = $1
+     RETURNING user_id, nom, email, role, actif`,
+    [userId]
+  );
+  return result.rows[0] || null;
+};
+
+// Changer le mot de passe
+const changePassword = async (userId, newPassword) => {
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  const result = await pool.query(
+    `UPDATE users
+     SET password = $1, updated_at = NOW()
+     WHERE user_id = $2
+     RETURNING user_id, nom, email`,
+    [hashedPassword, userId]
+  );
+  return result.rows[0] || null;
+};
+
+module.exports = { login, getAllUsers, createUser, deactivateUser, changePassword };

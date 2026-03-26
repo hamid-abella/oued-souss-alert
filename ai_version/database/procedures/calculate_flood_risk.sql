@@ -5,6 +5,8 @@
 --               Croise le niveau actuel de l'eau + historique 7 jours de pluie
 --               Variables normalisées entre 0 et 1 avant pondération
 -- Poids : 60% niveau (indicateur direct) + 40% pluie (indicateur prédictif)
+-- Correction : Ajout du filtre c.statut = 'actif' sur les mesures de pluie
+--              (cohérence avec le filtre déjà appliqué sur mesures_niveau_eau)
 -- =============================================================
 
 CREATE OR REPLACE PROCEDURE calculate_flood_risk(p_zone_id INT)
@@ -34,10 +36,13 @@ BEGIN
     WHERE zone_id = p_zone_id;
 
     -- Étape 3 : Calculer la moyenne des précipitations sur les 7 derniers jours
+    -- Filtre c.statut = 'actif' ajouté pour cohérence avec l'étape 1 :
+    -- les mesures de capteurs hors service ou en maintenance sont exclues
     SELECT COALESCE(AVG(mp.pluie_mm), 0) INTO avg_pluie
     FROM mesures_pluie mp
     JOIN capteurs c ON mp.capteur_id = c.capteur_id
-    WHERE c.zone_id   = p_zone_id
+    WHERE c.zone_id    = p_zone_id
+      AND c.statut     = 'actif'    -- ignorer les capteurs hors service / maintenance
       AND mp.date_heure >= NOW() - INTERVAL '7 days';
 
     -- Étape 4 : Normalisation des variables entre 0 et 1

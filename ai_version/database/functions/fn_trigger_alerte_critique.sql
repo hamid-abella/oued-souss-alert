@@ -3,6 +3,8 @@
 -- Fichier : functions/fn_trigger_alerte_critique.sql
 -- Description : Génération automatique d'alerte quand indice = CRITIQUE
 --               Inclut traçabilité du capteur déclencheur
+-- Correction : Vérification d'alerte active existante avant insertion
+--              pour éviter les doublons lors d'appels successifs
 -- =============================================================
 
 CREATE OR REPLACE FUNCTION generate_alerte_critique()
@@ -12,6 +14,15 @@ DECLARE
 BEGIN
     -- Vérifier si le niveau de risque calculé est critique
     IF NEW.niveau_risque = 'CRITIQUE' THEN
+
+        -- Ne pas créer de doublon si une alerte ACTIVE existe déjà pour cette zone
+        IF EXISTS (
+            SELECT 1 FROM alertes
+            WHERE zone_id = NEW.zone_id
+              AND statut  = 'ACTIVE'
+        ) THEN
+            RETURN NEW; -- alerte déjà ouverte, rien à faire
+        END IF;
 
         -- Récupérer le capteur de niveau d'eau le plus récent de cette zone
         -- pour assurer la traçabilité de l'alerte
