@@ -8,6 +8,7 @@
 const bcrypt = require('bcryptjs');
 const jwt    = require('jsonwebtoken');
 const pool   = require('../config/db');
+const { JWT_SECRET } = require('../config/env');
 
 const login = async (email, password) => {
 
@@ -44,7 +45,7 @@ const login = async (email, password) => {
       nom:  user.nom,
       role: user.role,
     },
-    process.env.JWT_SECRET,
+    JWT_SECRET,
     { expiresIn: '8h' }
   );
 

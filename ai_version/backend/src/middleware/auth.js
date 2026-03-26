@@ -7,6 +7,7 @@
 
 const jwt = require('jsonwebtoken');
 const { PERMISSIONS } = require('../config/roles');
+const { JWT_SECRET } = require('../config/env');
 
 // ---------------------------------------------------------------
 // Vérification du token JWT
@@ -21,7 +22,7 @@ const authenticateJWT = (req, res, next) => {
   const token = authHeader.split(' ')[1];
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET);
     req.user = decoded; // { id, role, nom }
     next();
   } catch (err) {

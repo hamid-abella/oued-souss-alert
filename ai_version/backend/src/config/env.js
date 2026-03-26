@@ -13,7 +13,9 @@ module.exports = {
   DB_PASSWORD: process.env.DB_PASSWORD || "postgres",
   DB_NAME: process.env.DB_NAME || "oued_souss_alert",
 
-  JWT_SECRET: process.env.JWT_SECRET || "secret",
+  // Keep JWT secret consistent across app code and tests.
+  // Jest typically sets NODE_ENV="test", while production/dev use "secret" by default.
+  JWT_SECRET: process.env.JWT_SECRET || (process.env.NODE_ENV === 'test' ? 'test_secret' : 'secret'),
 
   PORT: process.env.PORT || 5000
 
