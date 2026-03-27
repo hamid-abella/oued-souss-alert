@@ -1,39 +1,42 @@
 -- =============================================================
--- Projet : Oued-Souss Alert
--- Fichier : schema/constraints.sql
--- Description : Contraintes CHECK supplémentaires
--- Correction : Tolérance de 1 seconde sur les contraintes de date des mesures
---              pour éviter des rejets aléatoires en cas de décalage d'horloge
---              entre le capteur et le serveur PostgreSQL
+-- Project: Oued-Souss Alert
+-- File: constraints.sql
+-- Description: CHECK constraints
 -- =============================================================
 
--- Contrainte : valeur indice toujours entre 0 et 1
-ALTER TABLE indices_risque
-    ADD CONSTRAINT chk_valeur_indice
-    CHECK (valeur_indice >= 0 AND valeur_indice <= 1);
+-- Risk index value between 0 and 1
+ALTER TABLE risk_indices
+    ADD CONSTRAINT chk_index_value
+    CHECK (index_value >= 0 AND index_value <= 1);
 
--- Contrainte : superficie toujours positive si renseignée
+-- Zone area positive if set
 ALTER TABLE zones
-    ADD CONSTRAINT chk_superficie_positive
-    CHECK (superficie IS NULL OR superficie > 0);
+    ADD CONSTRAINT chk_area_positive
+    CHECK (area_ha IS NULL OR area_ha > 0);
 
--- Contrainte : date d'installation capteur ne peut pas être dans le futur
-ALTER TABLE capteurs
-    ADD CONSTRAINT chk_date_installation
-    CHECK (date_installation IS NULL OR date_installation <= CURRENT_DATE);
+-- Sensor installation date cannot be in the future
+ALTER TABLE sensors
+    ADD CONSTRAINT chk_sensor_installation_date
+    CHECK (installation_date IS NULL OR installation_date <= CURRENT_DATE);
 
--- Contrainte : date de mesure ne peut pas être dans le futur
--- Tolérance de 1 seconde pour absorber les légères dérives d'horloge
--- entre les capteurs terrain et le serveur de base de données
-ALTER TABLE mesures_niveau_eau
-    ADD CONSTRAINT chk_date_mesure_niveau
-    CHECK (date_heure <= NOW() + INTERVAL '1 second');
+-- Water level measurement timestamp cannot be in the future (+1s tolerance)
+ALTER TABLE water_level_measurements
+    ADD CONSTRAINT chk_water_measurement_date
+    CHECK (timestamp <= NOW() + INTERVAL '1 second');
 
-ALTER TABLE mesures_pluie
-    ADD CONSTRAINT chk_date_mesure_pluie
-    CHECK (date_heure <= NOW() + INTERVAL '1 second');
+-- Rain measurement timestamp cannot be in the future (+1s tolerance)
+ALTER TABLE rain_measurements
+    ADD CONSTRAINT chk_rain_measurement_date
+    CHECK (timestamp <= NOW() + INTERVAL '1 second');
 
--- Contrainte : date alerte ne peut pas être dans le futur
-ALTER TABLE alertes
-    ADD CONSTRAINT chk_date_alerte
-    CHECK (date_alerte <= NOW() + INTERVAL '1 second');
+-- Alert timestamp cannot be in the future (+1s tolerance)
+ALTER TABLE alerts
+    ADD CONSTRAINT chk_alert_date
+    CHECK (alert_date <= NOW() + INTERVAL '1 second');
+
+-- Drop FK in case PostgreSQL created implicit ones (precaution)
+ALTER TABLE water_level_measurements_archive
+    DROP CONSTRAINT IF EXISTS fk_water_level_sensor;
+
+ALTER TABLE rain_measurements_archive
+    DROP CONSTRAINT IF EXISTS fk_rain_sensor;

@@ -1,39 +1,39 @@
 -- =============================================================
--- Projet : Oued-Souss Alert
--- Fichier : init.sql
--- Description : Script d'initialisation complet de la base de données
---               Exécuter ce fichier pour déployer l'intégralité du projet
--- Ordre d'exécution : Tables > Contraintes > Index > Functions > Triggers > Procédures > Seed
+-- Project: Oued-Souss Alert
+-- File: init.sql
+-- Description: Complete initialization script for the database
+--              Run this file to deploy the entire project
+-- Execution order: Tables > Constraints > Indexes > Functions/Triggers > Procedures > Seed
 -- =============================================================
 
--- Étape 1 : Création des tables et tables d'archive
+-- Step 1: Creation of tables and archive tables
 \i schema/tables.sql
 
--- Étape 2 : Contraintes supplémentaires
+-- Step 2: Additional constraints
 \i schema/constraints.sql
 
--- Étape 3 : Index de performance
+-- Step 3: Performance indexes
 \i schema/indexes.sql
 
--- Étape 4 : Fonctions (doivent être créées AVANT les triggers qui les appellent)
-\i functions/fn_check_valeurs_aberrantes.sql
-\i functions/fn_trigger_alerte_critique.sql
-\i functions/fn_update_niveau_alerte.sql
+-- Step 4: Functions
+\i functions/fn_check_outlier_values.sql
+\i functions/fn_trigger_critical_alert.sql
+\i functions/fn_update_alert_level.sql
 \i functions/fn_get_risk_trend.sql
 
--- Étape 5 : Triggers (dépendent des fonctions)
-\i triggers/trg_check_niveau_eau.sql
-\i triggers/trg_check_pluie.sql
-\i triggers/trg_generate_alerte.sql
-\i triggers/trg_close_alerte.sql
+-- Step 5: Triggers
+\i triggers/trg_check_water_level.sql
+\i triggers/trg_check_rain.sql
+\i triggers/trg_generate_critical_alert.sql
+\i triggers/trg_close_alert.sql
 
--- Étape 6 : Procédures stockées
+-- Step 6: Stored procedures
 \i procedures/calculate_flood_risk.sql
 \i procedures/archive_old_measurements.sql
 
--- Étape 7 : Données de test
-\i seed/mock_data.sql
+-- Step 7: Test data
+\i seed/seed_realistic.sql
 
 \echo '========================================'
-\echo 'Base de données Oued-Souss Alert initialisee avec succes.'
+\echo 'Oued-Souss Alert database successfully initialized.'
 \echo '========================================'

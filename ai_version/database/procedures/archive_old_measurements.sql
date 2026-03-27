@@ -1,32 +1,32 @@
 -- =============================================================
--- Projet : Oued-Souss Alert
--- Fichier : procedures/archive_old_measurements.sql
--- Description : Déplacement des anciennes mesures vers les tables d'archive
---               Maintient les performances sur les tables actives
---               Les tables archive sont créées dans schema/tables.sql
+-- Project: Oued-Souss Alert
+-- File: procedures/archive_old_measurements.sql
+-- Description: Move old measurements to archive tables
+--              Maintains performance on active tables
+--              Archive tables are created in schema/tables.sql
 -- =============================================================
 
-CREATE OR REPLACE PROCEDURE archive_old_measurements(p_date_limite TIMESTAMP)
+CREATE OR REPLACE PROCEDURE archive_old_measurements(p_cutoff_date TIMESTAMP)
 LANGUAGE plpgsql AS $$
 BEGIN
-    -- Archivage des mesures de niveau d'eau antérieures à la date limite
-    INSERT INTO mesures_niveau_eau_archive
-    SELECT * FROM mesures_niveau_eau
-    WHERE date_heure < p_date_limite;
+    -- Archiving water level measurements prior to the cutoff date
+    INSERT INTO water_level_measurements_archive
+    SELECT * FROM water_level_measurements
+    WHERE timestamp < p_cutoff_date;
 
-    -- Suppression des données archivées de la table active
-    DELETE FROM mesures_niveau_eau
-    WHERE date_heure < p_date_limite;
+    -- Deleting archived data from the active table
+    DELETE FROM water_level_measurements
+    WHERE timestamp < p_cutoff_date;
 
-    -- Archivage des mesures de pluie antérieures à la date limite
-    INSERT INTO mesures_pluie_archive
-    SELECT * FROM mesures_pluie
-    WHERE date_heure < p_date_limite;
+    -- Archiving rain measurements prior to the cutoff date
+    INSERT INTO rain_measurements_archive
+    SELECT * FROM rain_measurements
+    WHERE timestamp < p_cutoff_date;
 
-    -- Suppression des données archivées de la table active
-    DELETE FROM mesures_pluie
-    WHERE date_heure < p_date_limite;
+    -- Deleting archived data from the active table
+    DELETE FROM rain_measurements
+    WHERE timestamp < p_cutoff_date;
 
-    RAISE NOTICE 'Archivage terminé : mesures antérieures au % déplacées.', p_date_limite;
+    RAISE NOTICE 'Archiving complete: measurements prior to % moved.', p_cutoff_date;
 END;
 $$;

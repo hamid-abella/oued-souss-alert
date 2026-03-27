@@ -26,22 +26,22 @@ database/
 ├── schema/
 │   ├── tables.sql                # 7 tables principales + 2 tables archives
 │   ├── constraints.sql           # Contraintes CHECK supplémentaires
-│   └── indexes.sql               # 7 index de performance
+│   └── indexes.sql               # Index de performance
 ├── functions/
-│   ├── fn_check_valeurs_aberrantes.sql   # Validation niveau eau + pluie
-│   ├── fn_trigger_alerte_critique.sql    # Génération alerte si CRITIQUE (anti-doublon)
-│   ├── fn_update_niveau_alerte.sql       # Fermeture alerte si niveau baisse
-│   └── fn_get_risk_trend.sql             # Analyse tendance du risque
+│   ├── fn_check_outlier_values.sql   # Validation niveau eau + pluie
+│   ├── fn_trigger_critical_alert.sql # Génération alerte si CRITICAL (anti-doublon)
+│   ├── fn_update_alert_level.sql     # Fermeture alerte si niveau baisse
+│   └── fn_get_risk_trend.sql         # Analyse tendance du risque
 ├── triggers/
-│   ├── trg_check_niveau_eau.sql  # BEFORE INSERT mesures_niveau_eau
-│   ├── trg_check_pluie.sql       # BEFORE INSERT mesures_pluie
-│   ├── trg_generate_alerte.sql   # AFTER INSERT indices_risque
-│   └── trg_close_alerte.sql      # AFTER INSERT mesures_niveau_eau
+│   ├── trg_check_water_level.sql         # BEFORE INSERT water_level_measurements
+│   ├── trg_check_rain.sql                # BEFORE INSERT rain_measurements
+│   ├── trg_generate_critical_alert.sql   # AFTER INSERT risk_indices
+│   └── trg_close_alert.sql               # AFTER INSERT water_level_measurements
 ├── procedures/
-│   ├── calculate_flood_risk.sql  # Calcul indice de risque (0 à 1)
+│   ├── calculate_flood_risk.sql      # Calcul indice de risque (0 à 1)
 │   └── archive_old_measurements.sql  # Archivage anciennes mesures
 └── seed/
-    └── mock_data.sql             # 5 zones + capteurs + mesures de test
+    └── seed_realistic.sql            # 5 zones + capteurs + mesures de test
 ```
 
 ---
@@ -52,11 +52,11 @@ database/
 | Colonne | Type | Description |
 |---|---|---|
 | user_id | SERIAL PK | Identifiant unique |
-| nom | VARCHAR(100) | Nom complet |
+| name | VARCHAR(100) | Nom complet |
 | email | VARCHAR(150) | Email unique |
 | password | VARCHAR(255) | Mot de passe hashé (bcrypt) |
-| role | VARCHAR(20) | admin / operateur / lecteur / securite |
-| actif | BOOLEAN | Compte actif (désactiver sans supprimer) |
+| role | VARCHAR(20) | admin / operator / reader / security |
+| active | BOOLEAN | Compte actif (désactiver sans supprimer) |
 | created_at | TIMESTAMP | Date de création |
 | updated_at | TIMESTAMP | Date de dernière modification |
 
@@ -64,87 +64,87 @@ database/
 | Colonne | Type | Description |
 |---|---|---|
 | zone_id | SERIAL PK | Identifiant unique |
-| nom | VARCHAR(100) | Nom de la zone |
-| type_zone | VARCHAR(50) | agricole / urbaine / mixte |
-| superficie | DECIMAL(10,2) | Surface en hectares |
+| name | VARCHAR(100) | Nom de la zone |
+| zone_type | VARCHAR(50) | agricultural / urban / mixed |
+| area_ha | DECIMAL(10,2) | Surface en hectares |
 | latitude | DECIMAL(9,6) | Coordonnée GPS |
 | longitude | DECIMAL(9,6) | Coordonnée GPS |
-| seuil_critique | NUMERIC | Niveau d'eau en mètres déclenchant l'alerte |
+| critical_level | NUMERIC | Niveau d'eau en mètres déclenchant l'alerte |
 
-### `capteurs`
+### `sensors`
 | Colonne | Type | Description |
 |---|---|---|
-| capteur_id | SERIAL PK | Identifiant unique |
+| sensor_id | SERIAL PK | Identifiant unique |
 | zone_id | INTEGER FK | Zone associée |
-| type_capteur | VARCHAR(50) | niveau_eau / pluie |
-| date_installation | DATE | Date de mise en service |
-| statut | VARCHAR(20) | actif / maintenance / hors_service |
+| sensor_type | VARCHAR(50) | water_level / rain |
+| installation_date | DATE | Date de mise en service |
+| status | VARCHAR(20) | active / maintenance / offline |
 
-### `mesures_niveau_eau`
+### `water_level_measurements`
 | Colonne | Type | Description |
 |---|---|---|
-| mesure_id | SERIAL PK | Identifiant unique |
-| capteur_id | INTEGER FK | Capteur ayant effectué la mesure |
-| date_heure | TIMESTAMP | Date et heure exacte |
-| niveau_eau | NUMERIC(5,2) | Valeur en mètres **[0, 20]** |
+| measurement_id | SERIAL PK | Identifiant unique |
+| sensor_id | INTEGER FK | Capteur ayant effectué la mesure |
+| timestamp | TIMESTAMP | Date et heure exacte |
+| water_level_m | NUMERIC(5,2) | Valeur en mètres **[0, 20]** |
 
-### `mesures_pluie`
+### `rain_measurements`
 | Colonne | Type | Description |
 |---|---|---|
-| mesure_id | SERIAL PK | Identifiant unique |
-| capteur_id | INTEGER FK | Capteur ayant effectué la mesure |
-| date_heure | TIMESTAMP | Date et heure exacte |
-| pluie_mm | NUMERIC(5,2) | Quantité en millimètres **[0, 500]** |
+| measurement_id | SERIAL PK | Identifiant unique |
+| sensor_id | INTEGER FK | Capteur ayant effectué la mesure |
+| timestamp | TIMESTAMP | Date et heure exacte |
+| rain_mm | NUMERIC(5,2) | Quantité en millimètres **[0, 500]** |
 
-### `indices_risque`
+### `risk_indices`
 | Colonne | Type | Description |
 |---|---|---|
-| indice_id | SERIAL PK | Identifiant unique |
+| index_id | SERIAL PK | Identifiant unique |
 | zone_id | INTEGER FK | Zone analysée |
-| date_calcul | TIMESTAMP | Date du calcul |
-| valeur_indice | NUMERIC(5,2) | Indice normalisé **[0, 1]** |
-| niveau_risque | VARCHAR(20) | FAIBLE / MOYEN / ELEVE / CRITIQUE |
+| calculation_date | TIMESTAMP | Date du calcul |
+| index_value | NUMERIC(5,2) | Indice normalisé **[0, 1]** |
+| risk_level | VARCHAR(20) | LOW / MEDIUM / HIGH / CRITICAL |
 
-### `alertes`
+### `alerts`
 | Colonne | Type | Description |
 |---|---|---|
-| alerte_id | SERIAL PK | Identifiant unique |
+| alert_id | SERIAL PK | Identifiant unique |
 | zone_id | INTEGER FK | Zone concernée |
-| indice_id | INTEGER FK | Indice qui a déclenché l'alerte (nullable) |
-| capteur_id | INTEGER FK | Capteur source (nullable) |
-| date_alerte | TIMESTAMP | Date de génération |
-| type_alerte | VARCHAR(50) | CRUE / PRECIPITATION_INTENSE / DEPASSEMENT_SEUIL |
+| index_id | INTEGER FK | Indice qui a déclenché l'alerte (nullable) |
+| sensor_id | INTEGER FK | Capteur source (nullable) |
+| alert_date | TIMESTAMP | Date de génération |
+| alert_type | VARCHAR(50) | FLOOD / LEVEL_EXCEEDED / HEAVY_RAIN |
 | message | TEXT | Description de l'alerte |
-| statut | VARCHAR(20) | ACTIVE / RESOLUE |
+| status | VARCHAR(20) | ACTIVE / RESOLVED |
 
 ---
 
 ## Triggers
 
-### `trg_check_niveau_eau`
+### `trg_check_water_level`
 ```sql
--- Se déclenche : BEFORE INSERT ON mesures_niveau_eau
+-- Se déclenche : BEFORE INSERT ON water_level_measurements
 -- Rôle : rejette toute valeur hors [0, 20] mètres
 -- Cas QA : capteur défaillant envoyant -50m → rejeté automatiquement
 ```
 
-### `trg_check_pluie`
+### `trg_check_rain`
 ```sql
--- Se déclenche : BEFORE INSERT ON mesures_pluie
+-- Se déclenche : BEFORE INSERT ON rain_measurements
 -- Rôle : rejette toute valeur hors [0, 500] mm
 ```
 
-### `trg_generate_alerte`
+### `trg_generate_critical_alert`
 ```sql
--- Se déclenche : AFTER INSERT ON indices_risque
--- Rôle : crée une alerte si niveau_risque = 'CRITIQUE'
+-- Se déclenche : AFTER INSERT ON risk_indices
+-- Rôle : crée une alerte si risk_level = 'CRITICAL'
 -- Anti-doublon : vérifie qu'aucune alerte ACTIVE n'existe déjà pour la zone
 -- Inclut : traçabilité zone + indice + capteur
 ```
 
-### `trg_close_alerte`
+### `trg_close_alert`
 ```sql
--- Se déclenche : AFTER INSERT ON mesures_niveau_eau
+-- Se déclenche : AFTER INSERT ON water_level_measurements
 -- Rôle : résout toutes les alertes actives de la zone si niveau < 50% du seuil
 -- Note : la fermeture est zonale (tous les capteurs de la zone sont considérés)
 ```
@@ -163,17 +163,17 @@ CALL calculate_flood_risk(1);
 -- Formule
 indice = (niveau_normalisé × 0.6) + (pluie_normalisée × 0.4)
 
--- Seuls les capteurs statut = 'actif' sont pris en compte
+-- Seuls les capteurs status = 'active' sont pris en compte
 -- (aussi bien pour le niveau d'eau que pour les précipitations)
 
 -- Classification
-indice ≥ 0.9  → CRITIQUE
-indice ≥ 0.7  → ELEVE
-indice ≥ 0.4  → MOYEN
-indice <  0.4 → FAIBLE
+indice ≥ 0.9  → CRITICAL
+indice ≥ 0.7  → HIGH
+indice ≥ 0.4  → MEDIUM
+indice <  0.4 → LOW
 ```
 
-### `archive_old_measurements(p_date_limite TIMESTAMP)`
+### `archive_old_measurements(p_cutoff_date TIMESTAMP)`
 
 Déplace les anciennes mesures vers les tables d'archive.
 ```sql
@@ -181,7 +181,7 @@ Déplace les anciennes mesures vers les tables d'archive.
 CALL archive_old_measurements(NOW() - INTERVAL '6 months');
 ```
 
-Les tables d'archive (`mesures_niveau_eau_archive`, `mesures_pluie_archive`) ne
+Les tables d'archive (`water_level_measurements_archive`, `rain_measurements_archive`) ne
 comportent pas de contraintes de clé étrangère, afin d'éviter des erreurs
 d'intégrité si des capteurs ont été supprimés après la prise des mesures.
 
@@ -189,54 +189,54 @@ d'intégrité si des capteurs ont été supprimés après la prise des mesures.
 
 ## Données de test
 
-Le fichier `seed/mock_data.sql` contient :
+Le fichier `seed/seed_realistic.sql` contient :
 
 - **5 zones** de la région Souss-Massa avec coordonnées GPS réelles
 - **10 capteurs** (niveau eau + pluie par zone)
-- **4 comptes utilisateurs** (admin, opérateur, lecteur, agent sécurité)
+- **4 comptes utilisateurs** (admin, operator, reader, security)
 - **Mesures historiques** sur 7 jours avec scénario de crue pour Zone 1
-- **Mesures Zone 5** couvrant le scénario capteur pluie `hors_service`
+- **Mesures Zone 5** couvrant le scénario capteur pluie `offline`
 - **Appels** à `calculate_flood_risk` pour générer indices et alertes
 
 ```bash
 # Réinitialiser complètement les données de test
 psql -U postgres -d oued_souss_alert -c "
-TRUNCATE alertes, indices_risque, mesures_pluie, mesures_niveau_eau,
-         capteurs, zones, users RESTART IDENTITY CASCADE;"
+TRUNCATE alerts, risk_indices, rain_measurements, water_level_measurements,
+         sensors, zones, users RESTART IDENTITY CASCADE;"
 
-psql -U postgres -d oued_souss_alert -f database/seed/mock_data.sql
+psql -U postgres -d oued_souss_alert -f database/seed/seed_realistic.sql
 ```
 
-> **Attention** : sans le `TRUNCATE` préalable, relancer `mock_data.sql`
-> génère des doublons dans `indices_risque`. La protection anti-doublon de
-> `generate_alerte_critique()` empêche les doublons dans `alertes`, mais
-> `indices_risque` reste additif.
+> **Attention** : sans le `TRUNCATE` préalable, relancer `seed_realistic.sql`
+> génère des doublons dans `risk_indices`. La protection anti-doublon de
+> `generate_critical_alert()` empêche les doublons dans `alerts`, mais
+> `risk_indices` reste additif.
 
 ---
 
 ## Requêtes utiles
 ```sql
 -- État général du système
-SELECT z.nom, ir.niveau_risque, ir.valeur_indice,
-       COUNT(a.alerte_id) FILTER (WHERE a.statut = 'ACTIVE') AS alertes_actives
+SELECT z.name, ir.risk_level, ir.index_value,
+       COUNT(a.alert_id) FILTER (WHERE a.status = 'ACTIVE') AS alertes_actives
 FROM zones z
-LEFT JOIN indices_risque ir ON ir.zone_id = z.zone_id
-LEFT JOIN alertes a ON a.zone_id = z.zone_id
-GROUP BY z.nom, ir.niveau_risque, ir.valeur_indice
-ORDER BY ir.valeur_indice DESC NULLS LAST;
+LEFT JOIN risk_indices ir ON ir.zone_id = z.zone_id
+LEFT JOIN alerts a ON a.zone_id = z.zone_id
+GROUP BY z.name, ir.risk_level, ir.index_value
+ORDER BY ir.index_value DESC NULLS LAST;
 
 -- Dernières alertes actives
-SELECT z.nom, a.type_alerte, a.message, a.date_alerte
-FROM alertes a JOIN zones z ON a.zone_id = z.zone_id
-WHERE a.statut = 'ACTIVE'
-ORDER BY a.date_alerte DESC;
+SELECT z.name AS zone_name, a.alert_type, a.message, a.alert_date
+FROM alerts a JOIN zones z ON a.zone_id = z.zone_id
+WHERE a.status = 'ACTIVE'
+ORDER BY a.alert_date DESC;
 
 -- Historique des mesures d'une zone
-SELECT date_heure, niveau_eau
-FROM mesures_niveau_eau m
-JOIN capteurs c ON m.capteur_id = c.capteur_id
+SELECT timestamp, water_level_m
+FROM water_level_measurements m
+JOIN sensors c ON m.sensor_id = c.sensor_id
 WHERE c.zone_id = 1
-ORDER BY date_heure DESC
+ORDER BY timestamp DESC
 LIMIT 20;
 
 -- Tendance du risque sur une période
