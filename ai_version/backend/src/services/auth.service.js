@@ -2,7 +2,6 @@
 // Projet : Oued-Souss Alert
 // Fichier : src/services/auth.service.js
 // Description : Authentification depuis la base de données
-//               Remplace la liste statique USERS
 // =============================================================
 
 const bcrypt = require('bcryptjs');
@@ -14,10 +13,9 @@ const login = async (email, password) => {
 
   // Étape 1 : Chercher l'utilisateur en base de données
   const result = await pool.query(
-    `SELECT user_id, nom, email, password, role, actif
-     FROM users
-     WHERE email = $1`,
-    [email]  // requête paramétrée → protégée contre injection SQL
+    `SELECT user_id, name, email, password, role, active
+     FROM users WHERE email = $1`,
+    [email]
   );
 
   const user = result.rows[0];
@@ -28,7 +26,7 @@ const login = async (email, password) => {
   }
 
   // Étape 3 : Vérifier que le compte est actif
-  if (!user.actif) {
+  if (!user.active) {
     throw new Error('Compte désactivé. Contactez l\'administrateur.');
   }
 
@@ -42,7 +40,7 @@ const login = async (email, password) => {
   const token = jwt.sign(
     {
       id:   user.user_id,
-      nom:  user.nom,
+      nom:  user.name,
       role: user.role,
     },
     JWT_SECRET,
@@ -52,14 +50,14 @@ const login = async (email, password) => {
   return {
     token,
     role: user.role,
-    nom:  user.nom,
+    nom:  user.name,
   };
 };
 
 // Récupérer tous les utilisateurs (admin seulement)
 const getAllUsers = async () => {
   const result = await pool.query(
-    `SELECT user_id, nom, email, role, actif, created_at
+    `SELECT user_id, name, email, role, active, created_at
      FROM users
      ORDER BY user_id`
   );
@@ -70,13 +68,12 @@ const getAllUsers = async () => {
 const createUser = async (data) => {
   const { nom, email, password, role } = data;
 
-  // Hasher le mot de passe avant stockage
   const hashedPassword = await bcrypt.hash(password, 10);
 
   const result = await pool.query(
-    `INSERT INTO users (nom, email, password, role)
+    `INSERT INTO users (name, email, password, role)
      VALUES ($1, $2, $3, $4)
-     RETURNING user_id, nom, email, role, actif, created_at`,
+     RETURNING user_id, name, email, role, active, created_at`,
     [nom, email, hashedPassword, role]
   );
   return result.rows[0];
@@ -85,9 +82,9 @@ const createUser = async (data) => {
 // Désactiver un utilisateur (ne pas supprimer)
 const deactivateUser = async (userId) => {
   const result = await pool.query(
-    `UPDATE users SET actif = FALSE, updated_at = NOW()
+    `UPDATE users SET active = FALSE, updated_at = NOW()
      WHERE user_id = $1
-     RETURNING user_id, nom, email, role, actif`,
+     RETURNING user_id, name, email, role, active`,
     [userId]
   );
   return result.rows[0] || null;
@@ -100,7 +97,7 @@ const changePassword = async (userId, newPassword) => {
     `UPDATE users
      SET password = $1, updated_at = NOW()
      WHERE user_id = $2
-     RETURNING user_id, nom, email`,
+     RETURNING user_id, name, email`,
     [hashedPassword, userId]
   );
   return result.rows[0] || null;
