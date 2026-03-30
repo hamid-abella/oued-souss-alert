@@ -1,14 +1,25 @@
-// =============================================================
-// Projet : Oued-Souss Alert
-// Fichier : src/server.js
-// Description : Point d'entrée du serveur Express
-// =============================================================
+// Entry point — kept separate from app.js so Jest can import
+// app without binding to a port during tests.
+require('dotenv').config();
 
-const app = require('./app');
+const http   = require('http');
+const app    = require('./app');
 const logger = require('./utils/logger');
+const { PORT } = require('./config/env');
 
-const PORT = process.env.PORT || 3000;
+const server = http.createServer(app);
 
-app.listen(PORT, () => {
-  logger.info(`Serveur Oued-Souss Alert démarré sur le port ${PORT}`);
+server.listen(PORT, () => {
+  logger.info(`Server running on port ${PORT} [${process.env.NODE_ENV || 'development'}]`);
 });
+
+// Graceful shutdown on SIGTERM (Docker / PM2)
+process.on('SIGTERM', () => {
+  logger.info('SIGTERM received. Closing server...');
+  server.close(() => {
+    logger.info('Server closed.');
+    process.exit(0);
+  });
+});
+
+module.exports = server;

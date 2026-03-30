@@ -1,79 +1,65 @@
 // =============================================================
-// Projet : Oued-Souss Alert
-// Fichier : src/services/zones.service.js
-// Description : Logique métier pour les zones géographiques
+// Project: Oued-Souss Alert
+// File: src/services/zones.service.js
+// Description: Business logic for geographical zones
 // =============================================================
 
 const pool = require('../config/db');
 
-// Récupérer toutes les zones avec leur dernier indice de risque
 const getAllZones = async () => {
-  const result = await pool.query(`
-    SELECT
-      z.zone_id,
-      z.nom,
-      z.type_zone,
-      z.superficie,
-      z.latitude,
-      z.longitude,
-      z.seuil_critique,
-      ir.niveau_risque   AS dernier_niveau_risque,
-      ir.valeur_indice   AS dernier_indice,
-      ir.date_calcul     AS date_dernier_calcul
-    FROM zones z
-    LEFT JOIN LATERAL (
-      SELECT niveau_risque, valeur_indice, date_calcul
-      FROM indices_risque
-      WHERE zone_id = z.zone_id
-      ORDER BY date_calcul DESC
-      LIMIT 1
-    ) ir ON true
-    ORDER BY z.zone_id
-  `);
-  return result.rows;
+  const { rows } = await pool.query('SELECT * FROM zones ORDER BY name ASC');
+  return rows;
 };
 
-// Récupérer une zone par ID
+const getZonesAtRisk = async () => {
+  const { rows } = await pool.query(`
+    SELECT *
+    FROM risk_summary_view
+    WHERE last_risk_level IN ('HIGH', 'CRITICAL')
+       OR active_alert_id IS NOT NULL
+    ORDER BY last_risk_index DESC NULLS LAST
+  `);
+  return rows;
+};
+
 const getZoneById = async (zoneId) => {
-  const result = await pool.query(
+  const { rows } = await pool.query(
     'SELECT * FROM zones WHERE zone_id = $1',
     [zoneId]
   );
-  return result.rows[0] || null;
+  return rows[0] || null;
 };
 
-// Créer une nouvelle zone
 const createZone = async (data) => {
-  const { nom, type_zone, superficie, latitude, longitude, seuil_critique } = data;
-  const result = await pool.query(
-    `INSERT INTO zones (nom, type_zone, superficie, latitude, longitude, seuil_critique)
+  const { name, zone_type, area_ha, latitude, longitude, critical_level } = data;
+  const { rows } = await pool.query(
+    `INSERT INTO zones (name, zone_type, area_ha, latitude, longitude, critical_level)
      VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING *`,
-    [nom, type_zone, superficie, latitude, longitude, seuil_critique]
+    [name, zone_type, area_ha ?? null, latitude, longitude, critical_level]
   );
-  return result.rows[0];
+  return rows[0];
 };
 
-// Mettre à jour le seuil critique d'une zone
 const updateZone = async (zoneId, data) => {
-  const { nom, type_zone, superficie, seuil_critique } = data;
-  const result = await pool.query(
+  const { name, zone_type, area_ha, latitude, longitude, critical_level } = data;
+  const { rows } = await pool.query(
     `UPDATE zones
-     SET nom = $1, type_zone = $2, superficie = $3, seuil_critique = $4
-     WHERE zone_id = $5
+     SET name = $1, zone_type = $2, area_ha = $3,
+         latitude = $4, longitude = $5, critical_level = $6
+     WHERE zone_id = $7
      RETURNING *`,
-    [nom, type_zone, superficie, seuil_critique, zoneId]
+    [name, zone_type, area_ha ?? null, latitude, longitude, critical_level, zoneId]
   );
-  return result.rows[0] || null;
+  return rows[0] || null;
 };
 
-// Supprimer une zone
 const deleteZone = async (zoneId) => {
-  const result = await pool.query(
-    'DELETE FROM zones WHERE zone_id = $1 RETURNING *',
+  const { rows } = await pool.query(
+    'DELETE FROM zones WHERE zone_id = $1 RETURNING zone_id, name',
     [zoneId]
   );
-  return result.rows[0] || null;
+  return rows[0] || null;
 };
 
-module.exports = { getAllZones, getZoneById, createZone, updateZone, deleteZone };
+module.exports = { getAllZones, getZonesAtRisk, getZoneById, createZone, updateZone, deleteZone };

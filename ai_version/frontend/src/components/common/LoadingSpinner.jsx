@@ -1,9 +1,4 @@
-// =============================================================
-// Projet : Oued-Souss Alert
-// Fichier : src/components/common/LoadingSpinner.jsx
-// =============================================================
-
-const LoadingSpinner = ({ size = 32, text = 'Chargement...' }) => (
+const LoadingSpinner = ({ size = 32, text = 'Loading...' }) => (
   <div style={{
     display:        'flex',
     flexDirection:  'column',
@@ -18,8 +13,8 @@ const LoadingSpinner = ({ size = 32, text = 'Chargement...' }) => (
     <div style={{
       width:        size,
       height:       size,
-      border:       `2px solid var(--color-border)`,
-      borderTop:    `2px solid var(--color-primary)`,
+      border:       '2px solid var(--color-border)',
+      borderTop:    '2px solid var(--color-primary)',
       borderRadius: '50%',
       animation:    'spin 0.8s linear infinite',
     }} />

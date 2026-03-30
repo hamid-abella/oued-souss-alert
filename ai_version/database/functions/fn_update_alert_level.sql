@@ -1,9 +1,5 @@
--- =============================================================
--- Project: Oued-Souss Alert
--- File: functions/fn_update_alert_level.sql
 -- Description: Automatic closure of active alerts
 --              if water level drops below 50% of critical threshold
--- =============================================================
 
 CREATE OR REPLACE FUNCTION close_alert_if_low()
 RETURNS TRIGGER AS $$

@@ -1,4 +1,3 @@
-// Compteur d'alertes actives affiché dans la navbar
 const AlertBadge = ({ count }) => {
   if (!count) return null;
   return (
@@ -18,7 +17,7 @@ const AlertBadge = ({ count }) => {
       display:        'flex',
       alignItems:     'center',
       justifyContent: 'center',
-      animation:      count > 0 ? 'blink 2s ease-in-out infinite' : 'none',
+      animation:      'blink 2s ease-in-out infinite',
     }}>
       {count > 99 ? '99+' : count}
     </span>

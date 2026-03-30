@@ -1,152 +1,99 @@
-// =============================================================
-// Projet : Oued-Souss Alert
-// Fichier : src/utils/formatters.js
-// Description : Utilitaires de formatage des données
-//               Utilisé dans tous les composants et pages
-// =============================================================
-
 import { format, formatDistanceToNow } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
 
-// -------------------------------------------------------------
 // Dates
-// -------------------------------------------------------------
-
-// Formatage date complète lisible
-// Ex: "16 mars 2026 14:30"
 export const formatDate = (date) => {
   if (!date) return '—';
-  try {
-    return format(new Date(date), 'dd MMM yyyy HH:mm', { locale: fr });
-  } catch {
-    return '—';
-  }
+  try { return format(new Date(date), 'MMM dd yyyy HH:mm', { locale: enUS }); }
+  catch { return '—'; }
 };
 
-// Formatage date courte
-// Ex: "16/03/2026"
 export const formatDateShort = (date) => {
   if (!date) return '—';
-  try {
-    return format(new Date(date), 'dd/MM/yyyy', { locale: fr });
-  } catch {
-    return '—';
-  }
+  try { return format(new Date(date), 'MM/dd/yyyy', { locale: enUS }); }
+  catch { return '—'; }
 };
 
-// Temps relatif
-// Ex: "il y a 3 minutes"
 export const timeAgo = (date) => {
   if (!date) return '—';
-  try {
-    return formatDistanceToNow(new Date(date), { addSuffix: true, locale: fr });
-  } catch {
-    return '—';
-  }
+  try { return formatDistanceToNow(new Date(date), { addSuffix: true, locale: enUS }); }
+  catch { return '—'; }
 };
 
-// -------------------------------------------------------------
-// Niveaux de risque
-// -------------------------------------------------------------
-
-// Couleur CSS selon le niveau de risque
-export const riskColor = (niveau) => {
+// Risk levels — must match DB values: LOW / MEDIUM / HIGH / CRITICAL
+export const riskColor = (level) => {
   const colors = {
-    FAIBLE:   'var(--color-faible)',
-    MOYEN:    'var(--color-moyen)',
-    ELEVE:    'var(--color-eleve)',
-    CRITIQUE: 'var(--color-critique)',
+    LOW:      'var(--color-faible)',
+    MEDIUM:   'var(--color-moyen)',
+    HIGH:     'var(--color-eleve)',
+    CRITICAL: 'var(--color-critique)',
   };
-  return colors[niveau] || 'var(--color-text-muted)';
+  return colors[level] || 'var(--color-text-muted)';
 };
 
-// Icône emoji selon le niveau de risque
-export const riskIcon = (niveau) => {
-  const icons = {
-    FAIBLE:   '🟢',
-    MOYEN:    '🟡',
-    ELEVE:    '🟠',
-    CRITIQUE: '🔴',
-  };
-  return icons[niveau] || '⚪';
+export const riskIcon = (level) => {
+  const icons = { LOW: '🟢', MEDIUM: '🟡', HIGH: '🟠', CRITICAL: '🔴' };
+  return icons[level] || '⚪';
 };
 
-// Label français du niveau de risque
-export const riskLabel = (niveau) => {
-  const labels = {
-    FAIBLE:   'Faible',
-    MOYEN:    'Modéré',
-    ELEVE:    'Élevé',
-    CRITIQUE: 'Critique',
-  };
-  return labels[niveau] || 'Inconnu';
+export const riskLabel = (level) => {
+  const labels = { LOW: 'Low', MEDIUM: 'Medium', HIGH: 'High', CRITICAL: 'Critical' };
+  return labels[level] || 'Unknown';
 };
 
-// -------------------------------------------------------------
-// Valeurs numériques
-// -------------------------------------------------------------
-
-// Formatage valeur avec unité
-// Ex: formatValue(3.567, 'm') => "3.57 m"
+// Numeric formatting
 export const formatValue = (val, unit = '', decimals = 2) => {
   if (val == null || val === '' || isNaN(val)) return '—';
   return `${parseFloat(val).toFixed(decimals)}${unit ? ' ' + unit : ''}`;
 };
 
-// Formatage pourcentage
-// Ex: formatPercent(0.75) => "75%"
 export const formatPercent = (val) => {
   if (val == null || isNaN(val)) return '—';
   return `${(parseFloat(val) * 100).toFixed(1)}%`;
 };
 
-// Formatage superficie
-// Ex: formatSuperficie(450) => "450 ha"
-export const formatSuperficie = (val) => {
+export const formatArea = (val) => {
   if (val == null || isNaN(val)) return '—';
   return `${parseFloat(val).toFixed(0)} ha`;
 };
 
-// -------------------------------------------------------------
-// Types
-// -------------------------------------------------------------
-
-// Label français du type de zone
+// Zone type — must match DB values: agricultural / urban / mixed
 export const zoneTypeLabel = (type) => {
+  const labels = { agricultural: 'Agricultural', urban: 'Urban', mixed: 'Mixed' };
+  return labels[type] || type || '—';
+};
+
+// Alert type — must match DB values: FLOOD / HEAVY_RAIN / LEVEL_EXCEEDED
+export const alertTypeLabel = (type) => {
   const labels = {
-    agricole: 'Agricole',
-    urbaine:  'Urbaine',
-    mixte:    'Mixte',
+    FLOOD:          'Flood',
+    HEAVY_RAIN:     'Heavy Rain',
+    LEVEL_EXCEEDED: 'Level Exceeded',
   };
   return labels[type] || type || '—';
 };
 
-// Label français du type d'alerte
-export const alerteTypeLabel = (type) => {
-  const labels = {
-    CRUE:                  'Crue',
-    PRECIPITATION_INTENSE: 'Précipitation intense',
-    DEPASSEMENT_SEUIL:     'Dépassement de seuil',
-  };
-  return labels[type] || type || '—';
-};
-
-// Label français du statut capteur
-export const capteurStatutLabel = (statut) => {
-  const labels = {
-    actif:        'Actif',
-    maintenance:  'En maintenance',
-    hors_service: 'Hors service',
-  };
-  return labels[statut] || statut || '—';
-};
-
-// Couleur du statut capteur
-export const capteurStatutColor = (statut) => {
+// Alert type border color for feed
+export const alertTypeColor = (type) => {
   const colors = {
-    actif:        'var(--color-faible)',
-    maintenance:  'var(--color-moyen)',
-    hors_service: 'var(--color-critique)',
+    FLOOD:          'var(--color-critique)',
+    HEAVY_RAIN:     'var(--color-eleve)',
+    LEVEL_EXCEEDED: 'var(--color-moyen)',
   };
-  return colors[statut] || 'var(--color-text-muted)';
+  return colors[type] || 'var(--color-moyen)';
+};
+
+// Sensor status — must match DB values: active / maintenance / offline
+export const sensorStatusLabel = (status) => {
+  const labels = { active: 'Active', maintenance: 'Maintenance', offline: 'Offline' };
+  return labels[status] || status || '—';
+};
+
+export const sensorStatusColor = (status) => {
+  const colors = {
+    active:      'var(--color-faible)',
+    maintenance: 'var(--color-moyen)',
+    offline:     'var(--color-critique)',
+  };
+  return colors[status] || 'var(--color-text-muted)';
 };

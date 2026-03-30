@@ -1,42 +1,35 @@
-// =============================================================
-// Projet : Oued-Souss Alert
-// Fichier : src/context/AlertContext.jsx
-// Description : Contexte pour les alertes actives (polling 30s)
-// =============================================================
-
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { alertesApi } from '../api/alertes.api';
+import { getActiveAlerts } from '../api/alerts.api';
 import { useAuth } from './AuthContext';
 
 const AlertContext = createContext(null);
 
 export const AlertProvider = ({ children }) => {
-  const { isAuth }                = useAuth();
-  const [alertes,  setAlertes]    = useState([]);
-  const [loading,  setLoading]    = useState(false);
+  const { isAuth }  = useAuth();
+  const [alerts,  setAlerts]  = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const fetchAlertes = useCallback(async () => {
+  const fetchAlerts = useCallback(async () => {
     if (!isAuth) return;
     try {
       setLoading(true);
-      const res = await alertesApi.getActives();
-      setAlertes(res.data);
+      const res = await getActiveAlerts();
+      setAlerts(res.data);
     } catch {
-      // silencieux en cas d'erreur réseau
+      // silent on network error
     } finally {
       setLoading(false);
     }
   }, [isAuth]);
 
-  // Polling toutes les 30 secondes
   useEffect(() => {
-    fetchAlertes();
-    const interval = setInterval(fetchAlertes, 30000);
+    fetchAlerts();
+    const interval = setInterval(fetchAlerts, 30000);
     return () => clearInterval(interval);
-  }, [fetchAlertes]);
+  }, [fetchAlerts]);
 
   return (
-    <AlertContext.Provider value={{ alertes, loading, refresh: fetchAlertes }}>
+    <AlertContext.Provider value={{ alerts, loading, refresh: fetchAlerts }}>
       {children}
     </AlertContext.Provider>
   );

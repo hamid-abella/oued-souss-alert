@@ -1,6 +1,3 @@
--- =============================================================
--- Project: Oued-Souss Alert
--- File: seed_realistic.sql
 -- Description: Realistic test data for the Souss-Massa region
 --              Allows testing of triggers and alert thresholds
 --              without real data (Data Mocking)
@@ -14,32 +11,31 @@
 --            TRUNCATE alerts, risk_indices, rain_measurements,
 --                     water_level_measurements, sensors, zones, users
 --            RESTART IDENTITY CASCADE;
--- =============================================================
 
 -- Passwords are hashed with bcrypt (10 rounds)
 -- admin123, oper123, lecteur123, sec123
 INSERT INTO users (name, email, password, role) VALUES
 (
-    'Admin Systeme',
+    'System Admin',
     'admin@souss.ma',
     '$2a$10$6if2tvK/fh8FAXCPugMJIOCjaVS8KIIG3Pj5gt8VvoPx2lnErDX0S',
     'admin'
 ),
 (
-    'Operateur Terrain',
+    'Operator',
     'oper@souss.ma',
     '$2a$10$3O1pPKTjdxr.Q0Q4ljkp7eQvUCVir4uJ6jNEkqBFIXpjSCXVJmkAy',
     'operator'
 ),
 (
-    'Lecteur Dashboard',
-    'lecteur@souss.ma',
+    'Dashboard reader',
+    'reader@souss.ma',
     '$2a$10$U3qdrxOeXM53Abg1iRkBU.3eNYXndNsoS0EF4ob82zL/1p2Z5OeQe',
     'reader'
 ),
 (
-    'Agent Securite',
-    'securite@souss.ma',
+    'Security Agent',
+    'security@souss.ma',
     '$2a$10$2cu4BdYczLso.CJSCGbD9OjQgSodW1xvIwHUPRTktL/laPBQtGuNe',
     'security'
 );
@@ -130,32 +126,6 @@ INSERT INTO rain_measurements (sensor_id, timestamp, rain_mm) VALUES
 -- Note: no measurement for sensor 10 (Zone 5 - rain offline)
 -- This is intentional: this scenario validates that calculate_flood_risk
 -- correctly handles the absence of rain data (avg_rain = 0).
-
--- ---------------------------------------------------------------
--- QA Test: Outlier data (should be rejected by triggers)
--- These insertions will fail and validate the correct operation
--- ---------------------------------------------------------------
--- DO $$
--- BEGIN
---     -- Test 1: Negative level (failing sensor)
---     INSERT INTO water_level_measurements (sensor_id, timestamp, water_level_m)
---     VALUES (1, NOW(), -50.0);
---     RAISE NOTICE 'ERROR: The -50m value should have been rejected!';
--- EXCEPTION WHEN others THEN
---     RAISE NOTICE 'OK: -50m value correctly rejected by trigger.';
--- END;
--- $$;
---
--- DO $$
--- BEGIN
---     -- Test 2: Negative rain
---     INSERT INTO rain_measurements (sensor_id, timestamp, rain_mm)
---     VALUES (2, NOW(), -10.0);
---     RAISE NOTICE 'ERROR: The -10mm value should have been rejected!';
--- EXCEPTION WHEN others THEN
---     RAISE NOTICE 'OK: -10mm value correctly rejected by trigger.';
--- END;
--- $$;
 
 -- =============================================================
 -- Calculation of risk indices + automatic generation of alerts

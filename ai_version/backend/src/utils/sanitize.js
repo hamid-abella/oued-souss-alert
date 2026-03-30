@@ -1,36 +1,22 @@
-// =============================================================
-// Projet : Oued-Souss Alert
-// Fichier : src/utils/sanitize.js
-// Description : Utilitaires de sanitisation des entrées
-// Spec : Protection anti-injection SQL
-// =============================================================
-
-// Vérifie qu'un paramètre est un entier positif valide
-const sanitizeId = (id) => {
-  // Vérifier que la valeur est STRICTEMENT un entier (pas de caractères supplémentaires)
-  const str = String(id).trim();
-
-  // Regex : uniquement des chiffres, rien d'autre
-  if (!/^\d+$/.test(str)) {
-    throw new Error(`ID invalide : ${id}`);
-  }
-
-  const parsed = parseInt(str, 10);
-
-  if (isNaN(parsed) || parsed <= 0) {
-    throw new Error(`ID invalide : ${id}`);
-  }
-
-  return parsed;
+// Validates that a value is a positive integer (used for route :id params).
+// Throws an error caught by errorHandler → 400 response.
+const sanitizeId = (value, label = 'ID') => {
+  const id = parseInt(value, 10);
+  if (isNaN(id) || id < 1)
+    throw Object.assign(new Error(`Invalid ID: ${label} must be a positive integer.`), { status: 400 });
+  return id;
 };
 
-// Vérifie qu'une valeur numérique est dans un intervalle
-const sanitizeNumeric = (value, min, max) => {
-  const parsed = parseFloat(value);
-  if (isNaN(parsed) || parsed < min || parsed > max) {
-    throw new Error(`Valeur ${value} hors intervalle [${min}, ${max}]`);
-  }
-  return parsed;
+// Validates that a numeric value falls within [min, max].
+// Throws an error caught by errorHandler → 400 response.
+const sanitizeNumeric = (value, label, min, max) => {
+  const num = parseFloat(value);
+  if (isNaN(num) || num < min || num > max)
+    throw Object.assign(
+      new Error(`Value out of range: ${label} must be between ${min} and ${max}.`),
+      { status: 400 }
+    );
+  return num;
 };
 
 module.exports = { sanitizeId, sanitizeNumeric };

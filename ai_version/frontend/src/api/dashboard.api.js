@@ -1,6 +1,5 @@
 import api from './axios';
 
-export const dashboardApi = {
-  getOverview: () => api.get('/dashboard/overview'),
-  getStats:    () => api.get('/dashboard/stats'),
-};
+export const getDashboardOverview = ()       => api.get('/dashboard/overview');
+export const getDashboardStats    = ()       => api.get('/dashboard/stats');
+export const getDashboardTrend    = (zoneId) => api.get(`/dashboard/trend/${zoneId}`);

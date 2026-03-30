@@ -1,28 +1,35 @@
-// =============================================================
-// Projet : Oued-Souss Alert
-// Fichier : src/utils/logger.js
-// Description : Logger Winston pour traçabilité complète
-// Spec : Intégrité des logs (audit sécurité)
-// =============================================================
-
 const winston = require('winston');
+const path    = require('path');
+
+const { combine, timestamp, printf, colorize, errors } = winston.format;
+
+const logFormat = printf(({ level, message, timestamp, stack }) => {
+  return `${timestamp} [${level}]: ${stack || message}`;
+});
 
 const logger = winston.createLogger({
-  level: 'info',
-  format: winston.format.combine(
-    winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-    winston.format.printf(({ timestamp, level, message }) => {
-      return `[${timestamp}] ${level.toUpperCase()} : ${message}`;
-    })
+  level: process.env.LOG_LEVEL || 'info',
+  format: combine(
+    timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+    errors({ stack: true }),
+    logFormat
   ),
   transports: [
-    // Logs dans la console
-    new winston.transports.Console(),
-    // Logs dans un fichier (pour audit sécurité)
-    new winston.transports.File({ filename: 'logs/app.log' }),
-    // Logs d'erreurs séparés
-    new winston.transports.File({ filename: 'logs/error.log', level: 'error' })
-  ]
+    new winston.transports.File({
+      filename: path.join('logs', 'error.log'),
+      level:    'error',
+    }),
+    new winston.transports.File({
+      filename: path.join('logs', 'app.log'),
+    }),
+  ],
 });
+
+// In non-production environments also log to console
+if (process.env.NODE_ENV !== 'production') {
+  logger.add(new winston.transports.Console({
+    format: combine(colorize(), timestamp({ format: 'HH:mm:ss' }), logFormat),
+  }));
+}
 
 module.exports = logger;

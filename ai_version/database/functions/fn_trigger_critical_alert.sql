@@ -1,11 +1,7 @@
--- =============================================================
--- Project: Oued-Souss Alert
--- File: functions/fn_trigger_critical_alert.sql
 -- Description: Automatic generation of alert when risk index = CRITICAL
 --              Includes traceability of the triggering sensor
 -- Fix: Check for existing active alert before insertion
 --      to avoid duplicates during successive calls
--- =============================================================
 
 CREATE OR REPLACE FUNCTION generate_critical_alert()
 RETURNS TRIGGER AS $$

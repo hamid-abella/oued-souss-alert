@@ -1,57 +1,52 @@
-// =============================================================
-// Projet : Oued-Souss Alert
-// Fichier : src/middleware/auth.js
-// Description : Middleware d'authentification JWT + RBAC
-// Spec : RBAC obligatoire + protection anti-injection SQL
-// =============================================================
+const jwt               = require('jsonwebtoken');
+const { PERMISSIONS }   = require('../config/roles');
+const { JWT_SECRET }    = require('../config/env');
 
-const jwt = require('jsonwebtoken');
-const { PERMISSIONS } = require('../config/roles');
-const { JWT_SECRET } = require('../config/env');
-
-// ---------------------------------------------------------------
-// Vérification du token JWT
-// ---------------------------------------------------------------
+// Verifies the Bearer JWT token and attaches decoded payload to req.user.
 const authenticateJWT = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Token manquant ou invalide.' });
-  }
+  if (!authHeader || !authHeader.startsWith('Bearer '))
+    return res.status(401).json({ error: 'Missing or invalid token.' });
 
   const token = authHeader.split(' ')[1];
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded; // { id, role, nom }
+    req.user = decoded; // { user_id, role, email }
     next();
   } catch (err) {
-    return res.status(403).json({ error: 'Token expiré ou invalide.' });
+    return res.status(403).json({ error: 'Expired or invalid token.' });
   }
 };
 
-// ---------------------------------------------------------------
-// Vérification des permissions RBAC
-// Usage : authorizeRole('zones', 'create')
-// ---------------------------------------------------------------
+// RBAC permission check.
+// Usage: authorizeRole('zones', 'create')
+// Automatically calls authenticateJWT first if req.user is not set.
 const authorizeRole = (resource, action) => {
   return (req, res, next) => {
-    const role = req.user?.role;
-
-    if (!role) {
-      return res.status(403).json({ error: 'Rôle utilisateur non défini.' });
+    // Run authenticateJWT inline if not already applied on the route
+    if (!req.user) {
+      return authenticateJWT(req, res, () => checkPermission(req, res, next, resource, action));
     }
-
-    const allowed = PERMISSIONS[resource]?.[role]?.includes(action);
-
-    if (!allowed) {
-      return res.status(403).json({
-        error: `Accès refusé. Rôle '${role}' non autorisé pour '${action}' sur '${resource}'.`
-      });
-    }
-
-    next();
+    checkPermission(req, res, next, resource, action);
   };
+};
+
+const checkPermission = (req, res, next, resource, action) => {
+  const role = req.user?.role;
+
+  if (!role)
+    return res.status(403).json({ error: 'User role not defined.' });
+
+  const allowed = PERMISSIONS[resource]?.[role]?.includes(action);
+
+  if (!allowed)
+    return res.status(403).json({
+      error: `Access denied. Role '${role}' is not allowed to perform '${action}' on '${resource}'.`
+    });
+
+  next();
 };
 
 module.exports = { authenticateJWT, authorizeRole };

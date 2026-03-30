@@ -1,9 +1,3 @@
--- =============================================================
--- Project: Oued-Souss Alert
--- File: constraints.sql
--- Description: CHECK constraints
--- =============================================================
-
 -- Risk index value between 0 and 1
 ALTER TABLE risk_indices
     ADD CONSTRAINT chk_index_value

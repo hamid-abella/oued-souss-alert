@@ -1,54 +1,40 @@
-// =============================================================
-// Projet : Oued-Souss Alert
-// Fichier : src/routes/zones.routes.js
-// =============================================================
+const router            = require('express').Router();
+const zonesCtrl         = require('../controllers/zones.controller');
+const { authorizeRole } = require('../middleware/auth');
+const { body }          = require('express-validator');
+const validate          = require('../middleware/validate');
 
-const router              = require('express').Router();
-const zonesController     = require('../controllers/zones.controller');
-const { authorizeRole }   = require('../middleware/auth');
-const { body }            = require('express-validator');
-const validate            = require('../middleware/validate');
-
-// Validation des données d'entrée (anti-injection SQL)
 const zoneValidation = [
-  body('nom').isString().trim().notEmpty(),
-  body('type_zone').isIn(['agricole', 'urbaine', 'mixte']),
-  body('seuil_critique').isFloat({ min: 0.01 }),
+  body('name').isString().trim().notEmpty(),
+  body('zone_type').isIn(['agricultural', 'urban', 'mixed']),
+  body('critical_level').isFloat({ min: 0.01 }),
   body('latitude').isFloat({ min: -90, max: 90 }),
   body('longitude').isFloat({ min: -180, max: 180 }),
+  body('area_ha').optional().isFloat({ min: 0 }),
   validate
 ];
 
-// GET /api/zones - Toutes les zones
-router.get('/',
-  authorizeRole('zones', 'read'),
-  zonesController.getAll
-);
+// Must be declared before /:id to avoid route conflict
+router.get('/at-risk',  authorizeRole('zones', 'read'),   zonesCtrl.getAtRisk);
 
-// GET /api/zones/:id - Une zone
-router.get('/:id',
-  authorizeRole('zones', 'read'),
-  zonesController.getById
-);
+router.get('/',         authorizeRole('zones', 'read'),   zonesCtrl.getAll);
+router.get('/:id',      authorizeRole('zones', 'read'),   zonesCtrl.getById);
 
-// POST /api/zones - Créer une zone (admin seulement)
 router.post('/',
   authorizeRole('zones', 'create'),
   zoneValidation,
-  zonesController.create
+  zonesCtrl.create
 );
 
-// PUT /api/zones/:id - Modifier une zone (admin seulement)
 router.put('/:id',
   authorizeRole('zones', 'update'),
   zoneValidation,
-  zonesController.update
+  zonesCtrl.update
 );
 
-// DELETE /api/zones/:id - Supprimer une zone (admin seulement)
 router.delete('/:id',
   authorizeRole('zones', 'delete'),
-  zonesController.remove
+  zonesCtrl.remove
 );
 
 module.exports = router;

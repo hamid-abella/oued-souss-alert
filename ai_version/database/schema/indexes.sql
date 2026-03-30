@@ -1,8 +1,4 @@
--- =============================================================
--- Project: Oued-Souss Alert
--- File: indexes.sql
 -- Description: Indexes to optimize frequent queries
--- =============================================================
 
 -- Sensors by zone
 CREATE INDEX idx_sensors_zone ON sensors(zone_id);

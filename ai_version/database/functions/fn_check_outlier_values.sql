@@ -1,10 +1,6 @@
--- =============================================================
--- Project: Oued-Souss Alert
--- File: functions/fn_check_outlier_values.sql
 -- Description: Sensor data validation functions
 --              Prevents insertion of physically impossible values
 -- QA Task: Failing sensor scenario (e.g., -50m)
--- =============================================================
 
 -- Water level validation function
 -- Realistic interval: 0m (dry) to 20m (exceptional Oued Souss flood)

@@ -1,9 +1,5 @@
--- =============================================================
--- Project: Oued-Souss Alert
--- File: triggers/trg_check_rain.sql
 -- Description: Trigger to validate rain quantity before insertion
 --              Calls fn_check_outlier_values.sql functions
--- =============================================================
 
 -- Dependency: check_valid_rain() function must exist
 -- Execute fn_check_outlier_values.sql before this statement

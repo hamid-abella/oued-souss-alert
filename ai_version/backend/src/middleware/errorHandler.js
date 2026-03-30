@@ -1,37 +1,31 @@
-// =============================================================
-// Projet : Oued-Souss Alert
-// Fichier : src/middleware/errorHandler.js
-// Description : Gestionnaire global des erreurs Express
-// =============================================================
-
 const logger = require('../utils/logger');
 
 const errorHandler = (err, req, res, next) => {
-  logger.error(`${err.message} | URL: ${req.url} | Méthode: ${req.method}`);
+  logger.error(`${err.message} | URL: ${req.url} | Method: ${req.method}`);
 
-  // Erreur PostgreSQL : violation de contrainte
-  if (err.code === '23503') {
-    return res.status(400).json({ error: 'Référence invalide (clé étrangère).' });
-  }
+  // PostgreSQL: foreign key violation
+  if (err.code === '23503')
+    return res.status(400).json({ error: 'Invalid reference (foreign key).' });
 
-  // Erreur PostgreSQL : violation CHECK
-  if (err.code === '23514') {
-    return res.status(400).json({ error: 'Valeur hors limites autorisées.' });
-  }
+  // PostgreSQL: CHECK constraint violation
+  if (err.code === '23514')
+    return res.status(400).json({ error: 'Value out of allowed range.' });
 
-  // Erreur PostgreSQL : valeur unique déjà existante
-  if (err.code === '23505') {
-    return res.status(409).json({ error: 'Entrée déjà existante.' });
-  }
+  // PostgreSQL: unique constraint violation
+  if (err.code === '23505')
+    return res.status(409).json({ error: 'Entry already exists.' });
 
-  // AJOUT : Erreur de validation (sanitizeId, sanitizeNumeric)
-  if (err.message?.includes('ID invalide') ||
-      err.message?.includes('hors intervalle')) {
+  // PostgreSQL: trigger RAISE EXCEPTION (outlier values, e.g. -50m)
+  if (err.code === 'P0001')
+    return res.status(422).json({ error: err.message });
+
+  // Input validation errors (sanitizeId, sanitizeNumeric)
+  if (err.message?.includes('Invalid ID') ||
+      err.message?.includes('out of range'))
     return res.status(400).json({ error: err.message });
-  }
 
   res.status(err.status || 500).json({
-    error: err.message || 'Erreur interne du serveur.'
+    error: err.message || 'Internal server error.'
   });
 };
 

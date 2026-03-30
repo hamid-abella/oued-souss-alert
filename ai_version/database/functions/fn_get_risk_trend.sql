@@ -1,21 +1,8 @@
--- =============================================================
--- Project: Oued-Souss Alert
--- File: functions/fn_get_risk_trend.sql
 -- Description: Analysis of the risk trend for a specific zone
 --              over a given period (useful for the dashboard)
--- =============================================================
 
-CREATE OR REPLACE FUNCTION get_risk_trend(
-    p_zone_id    INT,
-    p_start_date TIMESTAMP,
-    p_end_date   TIMESTAMP
-)
-RETURNS TABLE (
-    zone_id      INT,
-    start_index  NUMERIC,
-    end_index    NUMERIC,
-    trend        TEXT
-)
+CREATE OR REPLACE FUNCTION get_risk_trend(p_zone_id INT, p_start_date TIMESTAMP, p_end_date TIMESTAMP)
+RETURNS TABLE (zone_id INT, start_index NUMERIC, end_index NUMERIC, trend TEXT)
 LANGUAGE plpgsql AS $$
 DECLARE
     v_start_index NUMERIC;

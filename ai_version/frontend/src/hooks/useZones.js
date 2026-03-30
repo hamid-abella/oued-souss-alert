@@ -1,11 +1,5 @@
-// =============================================================
-// Projet : Oued-Souss Alert
-// Fichier : src/hooks/useZones.js
-// Description : Hook personnalisé pour la gestion des zones
-// =============================================================
-
 import { useState, useEffect, useCallback } from 'react';
-import { zonesApi } from '../api/zones.api';
+import { getZones, createZone as apiCreate, deleteZone as apiDelete } from '../api/zones.api';
 
 export const useZones = () => {
   const [zones,   setZones]   = useState([]);
@@ -16,10 +10,10 @@ export const useZones = () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await zonesApi.getAll();
+      const res = await getZones();
       setZones(res.data);
     } catch (err) {
-      setError(err.response?.data?.error || 'Erreur lors du chargement des zones.');
+      setError(err.response?.data?.error || 'Failed to load zones.');
     } finally {
       setLoading(false);
     }
@@ -28,13 +22,13 @@ export const useZones = () => {
   useEffect(() => { fetchZones(); }, [fetchZones]);
 
   const createZone = async (data) => {
-    const res = await zonesApi.create(data);
+    const res = await apiCreate(data);
     setZones(prev => [...prev, res.data]);
     return res.data;
   };
 
   const deleteZone = async (id) => {
-    await zonesApi.delete(id);
+    await apiDelete(id);
     setZones(prev => prev.filter(z => z.zone_id !== id));
   };
 

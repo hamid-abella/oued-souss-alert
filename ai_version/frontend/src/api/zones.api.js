@@ -1,16 +1,8 @@
-// =============================================================
-// Projet : Oued-Souss Alert
-// Fichier : src/api/zones.api.js
-// Description : Appels API pour les zones géographiques
-// =============================================================
-
 import api from './axios';
 
-export const zonesApi = {
-  // Récupérer toutes les zones avec leur dernier indice de risque
-  getAll:    ()         => api.get('/zones'),
-  getById:   (id)       => api.get(`/zones/${id}`),
-  create:    (data)     => api.post('/zones', data),
-  update:    (id, data) => api.put(`/zones/${id}`, data),
-  delete:    (id)       => api.delete(`/zones/${id}`),
-};
+export const getZones       = ()          => api.get('/zones');
+export const getZonesAtRisk = ()          => api.get('/zones/at-risk');
+export const getZoneById    = (id)        => api.get(`/zones/${id}`);
+export const createZone     = (data)      => api.post('/zones', data);
+export const updateZone     = (id, data)  => api.put(`/zones/${id}`, data);
+export const deleteZone     = (id)        => api.delete(`/zones/${id}`);

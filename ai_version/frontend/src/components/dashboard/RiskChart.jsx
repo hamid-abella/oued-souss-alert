@@ -1,44 +1,39 @@
-// =============================================================
-// Projet : Oued-Souss Alert
-// Fichier : src/components/dashboard/RiskChart.jsx
-// Description : Graphique d'évolution des indices de risque
-// =============================================================
-
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, ReferenceLine
 } from 'recharts';
 import { format } from 'date-fns';
-import { fr }     from 'date-fns/locale';
+import { enUS }   from 'date-fns/locale';
+import { riskColor } from '../../utils/formatters';
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
+  const riskLevel = payload[0]?.payload?.risk_level;
   return (
     <div style={{
-      background:   'var(--color-surface)',
-      border:       '1px solid var(--color-border)',
-      borderRadius: 'var(--radius-md)',
-      padding:      '10px 14px',
-      fontFamily:   'var(--font-mono)',
-      fontSize:     '0.75rem',
+      background: 'var(--color-surface)', border: '1px solid var(--color-border)',
+      borderRadius: 'var(--radius-md)', padding: '10px 14px',
+      fontFamily: 'var(--font-mono)', fontSize: '0.75rem',
     }}>
       <div style={{ color: 'var(--color-text-muted)', marginBottom: '4px' }}>{label}</div>
       <div style={{ color: 'var(--color-primary)', fontWeight: 600 }}>
-        Indice : {payload[0]?.value?.toFixed(3)}
+        Index: {payload[0]?.value?.toFixed(3)}
       </div>
-      <div style={{ color: 'var(--color-text-muted)' }}>
-        Niveau : {payload[0]?.payload?.niveau_risque}
+      <div style={{ color: riskColor(riskLevel), fontWeight: 600 }}>
+        Level: {riskLevel}
       </div>
     </div>
   );
 };
 
+// Receives data from GET /api/dashboard/trend/:zoneId
+// Shape: [{ index_id, calculation_date, index_value, risk_level }]
 const RiskChart = ({ data = [] }) => {
-  const chartData = data.map(d => ({
+  const chartData = [...data].reverse().map(d => ({
     ...d,
-    date:  format(new Date(d.date_calcul), 'dd/MM HH:mm', { locale: fr }),
-    value: parseFloat(d.valeur_indice),
-  })).reverse();
+    date:  format(new Date(d.calculation_date), 'MM/dd HH:mm', { locale: enUS }),
+    value: parseFloat(d.index_value),
+  }));
 
   return (
     <ResponsiveContainer width="100%" height={220}>
@@ -57,9 +52,9 @@ const RiskChart = ({ data = [] }) => {
           axisLine={false}
         />
         <Tooltip content={<CustomTooltip />} />
-        {/* Seuil critique */}
-        <ReferenceLine y={0.9} stroke="var(--color-critique)" strokeDasharray="4 4" label="" />
+        <ReferenceLine y={0.9} stroke="var(--color-critique)" strokeDasharray="4 4" />
         <ReferenceLine y={0.7} stroke="var(--color-eleve)"    strokeDasharray="4 4" />
+        <ReferenceLine y={0.4} stroke="var(--color-moyen)"    strokeDasharray="4 4" />
         <Line
           type="monotone"
           dataKey="value"

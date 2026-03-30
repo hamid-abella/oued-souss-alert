@@ -1,106 +1,80 @@
 // =============================================================
-// Projet : Oued-Souss Alert
-// Fichier : src/services/auth.service.js
-// Description : Authentification depuis la base de données
+// Project: Oued-Souss Alert
+// File: src/services/auth.service.js
+// Description: Database access layer for users
 // =============================================================
 
-const bcrypt = require('bcryptjs');
-const jwt    = require('jsonwebtoken');
-const pool   = require('../config/db');
-const { JWT_SECRET } = require('../config/env');
+const pool = require('../config/db');
 
-const login = async (email, password) => {
-
-  // Étape 1 : Chercher l'utilisateur en base de données
-  const result = await pool.query(
-    `SELECT user_id, name, email, password, role, active
-     FROM users WHERE email = $1`,
+const getUserByEmail = async (email) => {
+  const { rows } = await pool.query(
+    'SELECT * FROM users WHERE email = $1 AND active = TRUE',
     [email]
   );
-
-  const user = result.rows[0];
-
-  // Étape 2 : Vérifier que l'utilisateur existe
-  if (!user) {
-    throw new Error('Email ou mot de passe incorrect.');
-  }
-
-  // Étape 3 : Vérifier que le compte est actif
-  if (!user.active) {
-    throw new Error('Compte désactivé. Contactez l\'administrateur.');
-  }
-
-  // Étape 4 : Vérifier le mot de passe avec bcrypt
-  const valid = await bcrypt.compare(password, user.password);
-  if (!valid) {
-    throw new Error('Email ou mot de passe incorrect.');
-  }
-
-  // Étape 5 : Générer le token JWT
-  const token = jwt.sign(
-    {
-      id:   user.user_id,
-      nom:  user.name,
-      role: user.role,
-    },
-    JWT_SECRET,
-    { expiresIn: '8h' }
-  );
-
-  return {
-    token,
-    role: user.role,
-    nom:  user.name,
-  };
+  return rows[0] || null;
 };
 
-// Récupérer tous les utilisateurs (admin seulement)
-const getAllUsers = async () => {
-  const result = await pool.query(
-    `SELECT user_id, name, email, role, active, created_at
-     FROM users
-     ORDER BY user_id`
-  );
-  return result.rows;
-};
-
-// Créer un utilisateur
-const createUser = async (data) => {
-  const { nom, email, password, role } = data;
-
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  const result = await pool.query(
-    `INSERT INTO users (name, email, password, role)
-     VALUES ($1, $2, $3, $4)
-     RETURNING user_id, name, email, role, active, created_at`,
-    [nom, email, hashedPassword, role]
-  );
-  return result.rows[0];
-};
-
-// Désactiver un utilisateur (ne pas supprimer)
-const deactivateUser = async (userId) => {
-  const result = await pool.query(
-    `UPDATE users SET active = FALSE, updated_at = NOW()
-     WHERE user_id = $1
-     RETURNING user_id, name, email, role, active`,
+const getUserById = async (userId) => {
+  const { rows } = await pool.query(
+    'SELECT user_id, name, email, role, active, created_at FROM users WHERE user_id = $1',
     [userId]
   );
-  return result.rows[0] || null;
+  return rows[0] || null;
 };
 
-// Changer le mot de passe
-const changePassword = async (userId, newPassword) => {
-  const hashedPassword = await bcrypt.hash(newPassword, 10);
-  const result = await pool.query(
-    `UPDATE users
-     SET password = $1, updated_at = NOW()
+const getAllUsers = async () => {
+  const { rows } = await pool.query(
+    'SELECT user_id, name, email, role, active, created_at FROM users ORDER BY created_at DESC'
+  );
+  return rows;
+};
+
+const createUser = async (name, email, hashedPassword, role) => {
+  const { rows } = await pool.query(
+    `INSERT INTO users (name, email, password, role)
+     VALUES ($1, $2, $3, $4)
+     RETURNING user_id, name, email, role, created_at`,
+    [name, email, hashedPassword, role]
+  );
+  return rows[0];
+};
+
+const deactivateUser = async (userId) => {
+  const { rows } = await pool.query(
+    `UPDATE users SET active = FALSE, updated_at = NOW()
+     WHERE user_id = $1
+     RETURNING user_id, name, active`,
+    [userId]
+  );
+  return rows[0] || null;
+};
+
+const changePassword = async (userId, hashedPassword) => {
+  const { rows } = await pool.query(
+    `UPDATE users SET password = $1, updated_at = NOW()
      WHERE user_id = $2
-     RETURNING user_id, name, email`,
+     RETURNING user_id, name`,
     [hashedPassword, userId]
   );
-  return result.rows[0] || null;
+  return rows[0] || null;
 };
 
-module.exports = { login, getAllUsers, createUser, deactivateUser, changePassword };
+const changeRole = async (userId, role) => {
+  const { rows } = await pool.query(
+    `UPDATE users SET role = $1, updated_at = NOW()
+     WHERE user_id = $2
+     RETURNING user_id, name, role`,
+    [role, userId]
+  );
+  return rows[0] || null;
+};
+
+module.exports = {
+  getUserByEmail,
+  getUserById,
+  getAllUsers,
+  createUser,
+  deactivateUser,
+  changePassword,
+  changeRole
+};

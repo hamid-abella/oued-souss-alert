@@ -1,10 +1,6 @@
--- =============================================================
--- Project: Oued-Souss Alert
--- File: procedures/archive_old_measurements.sql
 -- Description: Move old measurements to archive tables
 --              Maintains performance on active tables
 --              Archive tables are created in schema/tables.sql
--- =============================================================
 
 CREATE OR REPLACE PROCEDURE archive_old_measurements(p_cutoff_date TIMESTAMP)
 LANGUAGE plpgsql AS $$

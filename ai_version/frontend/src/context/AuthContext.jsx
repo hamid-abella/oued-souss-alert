@@ -1,34 +1,26 @@
-// =============================================================
-// Projet : Oued-Souss Alert
-// Fichier : src/context/AuthContext.jsx
-// Description : Contexte global d'authentification JWT + RBAC
-// =============================================================
-
 import { createContext, useContext, useState, useCallback } from 'react';
-import api from '../api/axios';
+import { login as apiLogin } from '../api/auth.api';
+import { PERMISSIONS } from '../config/roles';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  // Récupération de l'état depuis localStorage au démarrage
   const [user,  setUser]  = useState(() => {
     const u = localStorage.getItem('user');
     return u ? JSON.parse(u) : null;
   });
   const [token, setToken] = useState(() => localStorage.getItem('token'));
 
-  // Connexion : appel API + stockage token
   const login = useCallback(async (email, password) => {
-    const res = await api.post('/auth/login', { email, password });
-    const { token: t, role, nom } = res.data;
+    const res = await apiLogin({ email, password });
+    const { token: t, user: u } = res.data;
     localStorage.setItem('token', t);
-    localStorage.setItem('user', JSON.stringify({ role, nom }));
+    localStorage.setItem('user', JSON.stringify(u));
     setToken(t);
-    setUser({ role, nom });
-    return { role, nom };
+    setUser(u);
+    return u;
   }, []);
 
-  // Déconnexion : nettoyage localStorage
   const logout = useCallback(() => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -36,15 +28,11 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   }, []);
 
-  // Vérification des permissions RBAC côté frontend
-  const can = useCallback((action) => {
-    const permissions = {
-      admin:      ['read','create','update','delete','resolve'],
-      operateur:  ['read','create','update','resolve'],
-      lecteur:    ['read'],
-      securite:   ['read','resolve'],
-    };
-    return permissions[user?.role]?.includes(action) ?? false;
+  // RBAC: mirrors config/roles.js PERMISSIONS matrix
+  // Usage: can('alerts', 'update') / can('zones', 'delete')
+  const can = useCallback((resource, action) => {
+    if (!user?.role) return false;
+    return PERMISSIONS[resource]?.[user.role]?.includes(action) ?? false;
   }, [user]);
 
   return (

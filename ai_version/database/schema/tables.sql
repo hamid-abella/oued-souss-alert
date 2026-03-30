@@ -1,9 +1,3 @@
--- =============================================================
--- Project: Oued-Souss Alert
--- File: tables.sql
--- Description: Creation of main tables + N-N user associations
--- =============================================================
-
 -- Users of the system
 CREATE TABLE users (
     user_id        SERIAL PRIMARY KEY,

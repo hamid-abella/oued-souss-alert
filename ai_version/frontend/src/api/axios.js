@@ -1,27 +1,15 @@
-// =============================================================
-// Projet : Oued-Souss Alert
-// Fichier : src/api/axios.js
-// Description : Instance Axios centralisée avec intercepteurs JWT
-// =============================================================
-
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: '/api',
-  timeout: 10000,
-  headers: { 'Content-Type': 'application/json' }
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
 });
 
-// Intercepteur requête : injecte automatiquement le token JWT
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+  if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
-// Intercepteur réponse : redirige vers login si token expiré
 api.interceptors.response.use(
   (response) => response,
   (error) => {

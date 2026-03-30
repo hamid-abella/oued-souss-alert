@@ -1,13 +1,9 @@
--- =============================================================
--- Project: Oued-Souss Alert
--- File: procedures/calculate_flood_risk.sql
 -- Description: Calculation of the flood risk index
 --              Cross-references current water level + 7-day historical rain
 --              Variables are normalized between 0 and 1 before weighting
 -- Weight: 60% level (direct indicator) + 40% rain (predictive indicator)
 -- Fix: Added c.status = 'active' filter on rain measurements
 --      (consistency with the filter already applied on water_level_measurements)
--- =============================================================
 
 CREATE OR REPLACE PROCEDURE calculate_flood_risk(p_zone_id INT)
 LANGUAGE plpgsql AS $$

@@ -151,8 +151,8 @@ Ouvrez `http://localhost:5173` et connectez-vous avec un compte de démo :
 |---|---|---|
 | Admin | admin@souss.ma | admin123 |
 | Opérateur | oper@souss.ma | oper123 |
-| Lecteur | lecteur@souss.ma | lecteur123 |
-| Sécurité | securite@souss.ma | sec123 |
+| Lecteur | reader@souss.ma | lecteur123 |
+| Sécurité | security@souss.ma | sec123 |
 
 ---
 
