@@ -1,9 +1,16 @@
 # oued-souss-alert
 Souss-Massa Resilience 2026 – Oued-Souss: Alert Flood monitoring and risk management system.
 <div align="center">
-#Video Demo 
+#Video Demo ai_version
   https://youtu.be/hjVL5_teiNc?si=tFBlDgDMWBoddM9L
 # 🌊 Oued-Souss Alert
+#Video Demo  manual_version
+    https://youtu.be/REaTBFaXzok?si=knrjpLFuG34IpHQH
+
+
+
+
+
 
 ### Système de Surveillance et d'Alerte des Crues Agricoles
 
