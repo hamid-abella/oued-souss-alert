@@ -192,9 +192,31 @@ Moves old measurements to archive tables.
 ```sql
 CALL archive_old_measurements(NOW() - INTERVAL '6 months');
 ```
-
 ---
 
+## ⏰ Automatic Archiving
+
+This project uses PostgreSQL `pg_cron` to automatically archive old measurements.
+
+### Setup
+
+1. Enable pg_cron in PostgreSQL:
+   - Add to postgresql.conf:
+     shared_preload_libraries = 'pg_cron'
+
+2. Restart PostgreSQL
+
+3. Run:
+   CREATE EXTENSION pg_cron;
+
+4. Execute:
+   database/cron_jobs.sql
+
+### Behavior
+
+- Runs every day at midnight
+- Archives data older than 6 months
+---
 
 Archive tables (`water_level_measurements_archive`, `rain_measurements_archive`) do not include foreign key constraints to avoid integrity errors if sensors were deleted after measurements were recorded.
 

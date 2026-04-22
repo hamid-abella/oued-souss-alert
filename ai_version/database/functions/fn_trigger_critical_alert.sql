@@ -10,7 +10,6 @@ DECLARE
 BEGIN
     -- Check if the calculated risk level is critical
     IF NEW.risk_level = 'CRITICAL' THEN
-
         -- Do not create a duplicate if an ACTIVE alert already exists for this zone
         IF EXISTS (
             SELECT 1 FROM alerts
@@ -19,7 +18,6 @@ BEGIN
         ) THEN
             RETURN NEW; -- alert already open, nothing to do
         END IF;
-
         -- Retrieve the most recent water level sensor for this zone
         -- to ensure alert traceability
         SELECT s.sensor_id INTO v_sensor_id
@@ -29,23 +27,9 @@ BEGIN
           AND s.status = 'active'           -- only active sensors
         ORDER BY w.timestamp DESC
         LIMIT 1;
-
         -- Insert the alert with full zone + index + sensor reference
-        INSERT INTO alerts (
-            zone_id,
-            index_id,
-            sensor_id,
-            alert_date,
-            alert_type,
-            message,
-            status
-        )
-        VALUES (
-            NEW.zone_id,
-            NEW.index_id,
-            v_sensor_id,
-            NOW(),
-            'FLOOD',
+        INSERT INTO alerts (zone_id, index_id, sensor_id, alert_date, alert_type, message, status)
+        VALUES (NEW.zone_id, NEW.index_id, v_sensor_id, NOW(), 'FLOOD',
             FORMAT(
                 'Critical flood risk detected. Zone: %s | Index: %s | Sensor: %s',
                 NEW.zone_id,
@@ -54,7 +38,6 @@ BEGIN
             ),
             'ACTIVE'
         );
-
     END IF;
 
     RETURN NEW;

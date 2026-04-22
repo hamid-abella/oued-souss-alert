@@ -28,13 +28,16 @@
 \i procedures/calculate_flood_risk.sql
 \i procedures/archive_old_measurements.sql
 
--- Step 7: Views
+-- Step 7:Load cron jobs
+\i cron_jobs.sql
+
+-- Step 8: Views
 \i views/risk_summary_view.sql
 
--- Step 8: PostgreSQL-level RBAC using native roles and GRANT
+-- Step 9: PostgreSQL-level RBAC using native roles and GRANT
 \i rbac.sql
 
--- Step 9: Seed data
+-- Step 10: Seed data
 \i seed/seed_realistic.sql
 
 \echo '========================================'

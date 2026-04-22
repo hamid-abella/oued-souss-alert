@@ -15,10 +15,28 @@ const getUserByEmail = async (email) => {
 };
 
 const getUserById = async (userId) => {
-  const { rows } = await pool.query(
-    'SELECT user_id, name, email, role, active, created_at FROM users WHERE user_id = $1',
-    [userId]
-  );
+  const client = await pool.connect();
+
+  try {
+
+    await client.query("BEGIN");
+
+    await client.query(
+      `SET LOCAL ROLE app_${req.user.role}`
+    );
+
+    const { rows } = await client.query(
+      'SELECT user_id, name, email, role, active, created_at FROM users WHERE user_id = $1',
+      [userId]
+    );
+
+    await client.query("COMMIT");
+
+    return rows;
+
+  } finally {
+    client.release();
+  }
   return rows[0] || null;
 };
 

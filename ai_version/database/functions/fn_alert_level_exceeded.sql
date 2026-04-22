@@ -18,19 +18,8 @@ BEGIN
               AND status     = 'ACTIVE'
               AND alert_type = 'LEVEL_EXCEEDED'
         ) THEN
-            INSERT INTO alerts (
-                zone_id,
-                sensor_id,
-                alert_date,
-                alert_type,
-                message,
-                status
-            )
-            VALUES (
-                v_zone_id,
-                NEW.sensor_id,
-                NOW(),
-                'LEVEL_EXCEEDED',
+            INSERT INTO alerts (zone_id, sensor_id, alert_date, alert_type, message, status            )
+            VALUES ( v_zone_id, NEW.sensor_id, NOW(), 'LEVEL_EXCEEDED',
                 FORMAT(
                     'Critical level exceeded. Zone: %s | Measured level: %s m | Level: %s m | Sensor: %s',
                     v_zone_id,
@@ -47,3 +36,5 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+

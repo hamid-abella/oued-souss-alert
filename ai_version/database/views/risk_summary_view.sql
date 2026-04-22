@@ -6,7 +6,7 @@
 CREATE OR REPLACE VIEW risk_summary_view AS
 SELECT
     z.zone_id,
-    z.name                          AS zone_name,
+    z.name AS zone_name,
     z.zone_type,
     z.latitude,
     z.longitude,
